@@ -56,7 +56,3 @@ app.listen(PORT, () => {
   console.log(`📡 Health check: http://localhost:${PORT}/health`);
   console.log(`📰 News API: http://localhost:${PORT}/api/v1/news`);
 });
-
-
-
-
