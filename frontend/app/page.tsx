@@ -1,7 +1,6 @@
-
-import ThemeToggle from './ThemeToggle';
 "use client";
 
+import ThemeToggle from './ThemeToggle';
 
 export default function Home() {
   const newsArticles = [
