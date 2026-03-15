@@ -1,3 +1,5 @@
+
+import ThemeToggle from './ThemeToggle';
 "use client";
 
 
@@ -33,9 +35,9 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors" >
       {/* Header */}
-      <header className="bg-gradient-to-r from-orange-500 via-white to-green-500 shadow-md">
+<header className="bg-gradient-to-r from-orange-500 via-white to-green-500 dark:from-orange-600 dark:via-gray-800 dark:to-green-600 shadow-md">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -48,11 +50,12 @@ export default function Home() {
               </div>
             </div>
             <nav className="hidden md:flex gap-6">
-              <a href="#" className="text-gray-700 hover:text-orange-600 font-medium">मुख्य पृष्ठ</a>
-              <a href="#" className="text-gray-700 hover:text-orange-600 font-medium">राजनीति</a>
-              <a href="#" className="text-gray-700 hover:text-orange-600 font-medium">खेल</a>
-              <a href="#" className="text-gray-700 hover:text-orange-600 font-medium">मनोरंजन</a>
+              <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-orange-600 font-medium">मुख्य पृष्ठ</a>
+              <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-orange-600 font-medium">राजनीति</a>
+              <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-orange-600 font-medium">खेल</a>
+              <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-orange-600 font-medium">मनोरंजन</a>
             </nav>
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -101,7 +104,7 @@ export default function Home() {
             {/* News Grid */}
             <div className="grid md:grid-cols-2 gap-6">
               {newsArticles.slice(1).map((article) => (
-                <div key={article.id} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+                <div key={article.id} className="bg-white dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                   <img 
                     src={article.image} 
                     alt={article.title_hi}
@@ -123,7 +126,7 @@ export default function Home() {
 
           {/* Sidebar */}
           <div>
-            <div className="bg-white rounded-xl p-6 shadow-md mb-6">
+            <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 rounded-xl p-6 shadow-md mb-6">
               <h3 className="text-xl font-bold mb-4 border-b-2 border-orange-500 pb-2">
                 ट्रेंडिंग
               </h3>
@@ -145,7 +148,7 @@ export default function Home() {
             <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-xl p-6 shadow-md">
               <h3 className="text-xl font-bold mb-4">📱 ऐप डाउनलोड करें</h3>
               <p className="text-sm mb-4">तेज़ खबरें और ऑफलाइन पढ़ने के लिए हमारा मोबाइल ऐप डाउनलोड करें!</p>
-              <button className="bg-white text-orange-600 px-6 py-2 rounded-lg font-bold hover:bg-gray-100 transition-colors w-full">
+              <button className="bg-white dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 text-orange-600 px-6 py-2 rounded-lg font-bold hover:bg-gray-100 transition-colors w-full">
                 अभी डाउनलोड करें
               </button>
             </div>
