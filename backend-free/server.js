@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
-
+const pool = require('./db'); 
+require('dotenv').config({ path: './.env' });
+console.log("ENV PATH CHECK:", process.cwd());
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  console.log("Health endpoint hit"); 
   res.json({ 
     status: 'ok', 
     message: 'Rashtriya Prahari Backend is running!',
@@ -18,36 +20,35 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Sample news API endpoint
-app.get('/api/v1/news', (req, res) => {
-  res.json({ 
-    data: [
-      {
-        id: 1,
-        title_hi: 'नमूना समाचार शीर्षक',
-        title_en: 'Sample News Article',
-        content_hi: 'यह एक परीक्षण लेख है',
-        content_en: 'This is a test article',
-        category: 'Politics',
-        publish_date: new Date().toISOString()
-      }
-    ],
-    message: 'Sample data - database not connected yet'
-  });
+// news API endpoint
+app.get('/api/v1/news', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM news ORDER BY created_at DESC");
+    
+    res.json({
+      data: result.rows,
+      message: "Fetched from database"
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
-// Breaking news endpoint
-app.get('/api/v1/news/breaking', (req, res) => {
-  res.json({ 
-    data: [
-      {
-        id: 1,
-        title_hi: 'ब्रेकिंग न्यूज़ शीर्षक',
-        title_en: 'Breaking News Headline',
-        is_breaking: true
-      }
-    ]
-  });
+// breaking news API endpoint
+
+app.get('/api/v1/news/breaking', async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM news WHERE is_breaking = true"
+    );
+
+    res.json({ data: result.rows });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Start server
