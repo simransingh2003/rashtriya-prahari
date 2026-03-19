@@ -51,6 +51,103 @@ app.get('/api/v1/news/breaking', async (req, res) => {
   }
 });
 
+// POST - create new article (admin)
+app.post('/api/v1/news', async (req, res) => {
+  try {
+    const { title_hi, title_en, content, category, image_url, is_breaking } = req.body;
+    const result = await pool.query(
+      `INSERT INTO news (title_hi, title_en, content, category, image_url, is_breaking)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [title_hi, title_en, content, category, image_url, is_breaking || false]
+    );
+    res.status(201).json({ data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT - update article (admin)
+app.put('/api/v1/news/:id', async (req, res) => {
+  try {
+    const { title_hi, title_en, content, category, image_url, is_breaking } = req.body;
+    const result = await pool.query(
+      `UPDATE news SET title_hi=$1, title_en=$2, content=$3, category=$4,
+       image_url=$5, is_breaking=$6 WHERE id=$7 RETURNING *`,
+      [title_hi, title_en, content, category, image_url, is_breaking, req.params.id]
+    );
+    res.json({ data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE - remove article (admin)
+app.delete('/api/v1/news/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM news WHERE id=$1', [req.params.id]);
+    res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const multer = require('multer');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY  // use service key for backend uploads
+);
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Upload image or PDF to Supabase Storage
+app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const bucket = file.mimetype === 'application/pdf' ? 'pdfs' : 'images';
+
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file.buffer, { contentType: file.mimetype });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+    res.json({ url: publicUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Upload image or PDF to Supabase Storage
+app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const bucket = file.mimetype === 'application/pdf' ? 'pdfs' : 'images';
+
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file.buffer, { contentType: file.mimetype });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+    res.json({ url: publicUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Rashtriya Prahari Backend running on port ${PORT}`);
