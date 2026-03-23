@@ -27,32 +27,34 @@ export default function Home() {
     }
   }, []);
 
-  // Fetch live data from backend
   useEffect(() => {
-    const API = process.env.NEXT_PUBLIC_API_URL;
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
-    // Fetch all articles
-    fetch(`${API}/api/v1/news`)
-      .then(res => res.json())
-      .then(({ data }) => {
-        setNewsArticles(data || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch news:', err);
-        setLoading(false);
-      });
+  console.log("API:", API);
 
-    // Fetch breaking news for ticker
-    fetch(`${API}/api/v1/news/breaking`)
-      .then(res => res.json())
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setBreakingNews(data.map((n: Article) => n.title_hi).join(' • '));
-        }
-      })
-      .catch(err => console.error('Failed to fetch breaking news:', err));
-  }, []);
+  // Fetch all news
+  fetch(`${API}/api/v1/news`)
+    .then(res => res.json())
+    .then(({ data }) => {
+      setNewsArticles(data);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("Failed to fetch news:", err);
+      setLoading(false);
+    });
+
+  // Fetch breaking news
+  fetch(`${API}/api/v1/news/breaking`)
+    .then(res => res.json())
+    .then(({ data }) => {
+      if (data && data.length > 0) {
+        setBreakingNews(data.map((n: { title_hi: any; }) => n.title_hi).join(' • '));
+      }
+    })
+    .catch(err => console.error("Failed to fetch breaking news:", err));
+}, []);
+    
 
   const toggleTheme = () => {
     if (darkMode) {

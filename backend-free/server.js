@@ -16,7 +16,10 @@ const supabase = createClient(
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+}));
 app.use(express.json());
 
 // Health check
