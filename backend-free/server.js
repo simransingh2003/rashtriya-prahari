@@ -3,8 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 const pool = require('./db');
-require('dotenv').config({ path: './.env' });
-
+require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
