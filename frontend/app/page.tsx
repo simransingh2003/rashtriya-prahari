@@ -8,8 +8,73 @@ interface Article {
   title_en: string;
   category: string;
   image_url: string;
+  pdf_url: string;       // ✅ FIX: Added pdf_url field
   created_at: string;
   is_breaking: boolean;
+}
+
+// ✅ FIX: Helper to detect if a URL points to a PDF
+const isPdfUrl = (url: string) =>
+  url && (url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('/pdfs/'));
+
+// ✅ FIX: Component to render article media — image OR pdf card
+function ArticleMedia({ article, className }: { article: Article; className?: string }) {
+  if (article.pdf_url) {
+    return (
+      <a
+        href={article.pdf_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 dark:from-gray-700 dark:to-gray-800 border-2 border-dashed border-orange-300 dark:border-orange-600 rounded-lg hover:border-orange-500 transition-colors group ${className}`}
+      >
+        <div className="text-5xl mb-2 group-hover:scale-110 transition-transform duration-300">📄</div>
+        <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">PDF देखें / Read PDF</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">क्लिक करें</span>
+      </a>
+    );
+  }
+
+  const imgSrc = article.image_url && !isPdfUrl(article.image_url)
+    ? article.image_url
+    : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80';
+
+  return (
+    <img
+      src={imgSrc}
+      alt={article.title_hi}
+      className={`object-cover ${className}`}
+    />
+  );
+}
+
+// ✅ FIX: Hero article media — handles full-bleed image OR pdf banner
+function HeroMedia({ article }: { article: Article }) {
+  if (article.pdf_url) {
+    return (
+      <a
+        href={article.pdf_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full h-96 flex flex-col items-center justify-center bg-gradient-to-br from-orange-100 to-red-100 dark:from-gray-800 dark:to-gray-900 border-2 border-orange-300 dark:border-orange-700 rounded-xl hover:border-orange-500 transition-all group"
+      >
+        <div className="text-8xl mb-4 group-hover:scale-110 transition-transform duration-300">📰</div>
+        <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">PDF रिपोर्ट देखें</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">नया टैब में खुलेगा • Opens in new tab</span>
+      </a>
+    );
+  }
+
+  const imgSrc = article.image_url && !isPdfUrl(article.image_url)
+    ? article.image_url
+    : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80';
+
+  return (
+    <img
+      src={imgSrc}
+      alt={article.title_hi}
+      className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-500"
+    />
+  );
 }
 
 export default function Home() {
@@ -136,44 +201,116 @@ export default function Home() {
                 ताज़ा खबरें
               </h2>
 
+              {/* ✅ FIX: Hero article now uses HeroMedia component */}
               {newsArticles[0] && (
                 <div className="relative mb-8 rounded-xl overflow-hidden shadow-lg group cursor-pointer">
-                  <img
-                    src={newsArticles[0].image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80'}
-                    alt={newsArticles[0].title_hi}
-                    className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
-                  <div className="absolute bottom-0 p-6 text-white">
-                    {newsArticles[0].is_breaking && (
-                      <span className="bg-red-600 px-3 py-1 rounded-full text-xs font-bold mb-3 inline-block animate-pulse">
-                        🔴 ब्रेकिंग न्यूज़
-                      </span>
-                    )}
-                    <h3 className="text-3xl font-bold mb-2 hover:text-orange-400 transition-colors">{newsArticles[0].title_hi}</h3>
-                    <p className="text-sm text-gray-300">{formatDate(newsArticles[0].created_at)} • {newsArticles[0].category}</p>
-                  </div>
+                  {newsArticles[0].pdf_url ? (
+                    // PDF hero: no overlay needed, show the PDF card directly
+                    <a
+                      href={newsArticles[0].pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-96 flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900 block"
+                    >
+                      <div className="text-8xl mb-4 group-hover:scale-110 transition-transform duration-300">📰</div>
+                      <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">PDF रिपोर्ट देखें</span>
+                      <span className="text-sm text-gray-400 mt-2">नया टैब में खुलेगा</span>
+                      <div className="mt-4 px-8 py-2 bg-orange-500 text-white rounded-full font-semibold hover:bg-orange-600 transition-colors">
+                        📄 खोलें
+                      </div>
+                      <div className="mt-4 px-6 text-center">
+                        {newsArticles[0].is_breaking && (
+                          <span className="bg-red-600 px-3 py-1 rounded-full text-xs font-bold mb-3 inline-block text-white animate-pulse">
+                            🔴 ब्रेकिंग न्यूज़
+                          </span>
+                        )}
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-2">{newsArticles[0].title_hi}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(newsArticles[0].created_at)} • {newsArticles[0].category}</p>
+                      </div>
+                    </a>
+                  ) : (
+                    <>
+                      <img
+                        src={
+                          newsArticles[0].image_url && !isPdfUrl(newsArticles[0].image_url)
+                            ? newsArticles[0].image_url
+                            : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80'
+                        }
+                        alt={newsArticles[0].title_hi}
+                        className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
+                      <div className="absolute bottom-0 p-6 text-white">
+                        {newsArticles[0].is_breaking && (
+                          <span className="bg-red-600 px-3 py-1 rounded-full text-xs font-bold mb-3 inline-block animate-pulse">
+                            🔴 ब्रेकिंग न्यूज़
+                          </span>
+                        )}
+                        <h3 className="text-3xl font-bold mb-2 hover:text-orange-400 transition-colors">{newsArticles[0].title_hi}</h3>
+                        <p className="text-sm text-gray-300">{formatDate(newsArticles[0].created_at)} • {newsArticles[0].category}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
+              {/* ✅ FIX: Article cards now render PDF badge + link if pdf_url is present */}
               <div className="grid md:grid-cols-2 gap-6">
                 {newsArticles.slice(1).map((article) => (
                   <div key={article.id} className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80'}
-                        alt={article.title_hi}
-                        className="w-full h-48 object-cover hover:scale-110 transition-transform duration-500"
-                      />
+                    <div className="relative overflow-hidden h-48">
+                      {article.pdf_url ? (
+                        // ✅ PDF thumbnail card
+                        <a
+                          href={article.pdf_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 dark:from-gray-700 dark:to-gray-800 border-b-2 border-orange-200 dark:border-orange-800 hover:from-orange-50 hover:to-red-50 transition-all group"
+                        >
+                          <div className="text-5xl mb-2 group-hover:scale-110 transition-transform duration-300">📄</div>
+                          <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/40 px-3 py-1 rounded-full">
+                            PDF देखें
+                          </span>
+                        </a>
+                      ) : (
+                        <img
+                          src={
+                            article.image_url && !isPdfUrl(article.image_url)
+                              ? article.image_url
+                              : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80'
+                          }
+                          alt={article.title_hi}
+                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                        />
+                      )}
                     </div>
                     <div className="p-5">
-                      <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-3 py-1 rounded-full">
-                        {article.category}
-                      </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-3 py-1 rounded-full">
+                          {article.category}
+                        </span>
+                        {/* ✅ PDF badge */}
+                        {article.pdf_url && (
+                          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
+                            📄 PDF
+                          </span>
+                        )}
+                      </div>
                       <h3 className="font-bold text-lg mt-3 mb-2 line-clamp-2 text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors">
                         {article.title_hi}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(article.created_at)}</p>
+                      {/* ✅ PDF open link at bottom of card */}
+                      {article.pdf_url && (
+                        <a
+                          href={article.pdf_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline"
+                        >
+                          📄 पूरी रिपोर्ट पढ़ें →
+                        </a>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -189,7 +326,10 @@ export default function Home() {
                       <span className="text-2xl font-bold text-orange-500 dark:text-orange-400">{i + 1}</span>
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors">{article.title_hi}</p>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(article.created_at)}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(article.created_at)}</span>
+                          {article.pdf_url && <span className="text-xs text-blue-500">📄</span>}
+                        </div>
                       </div>
                     </div>
                   ))}

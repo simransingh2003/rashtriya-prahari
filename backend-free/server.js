@@ -45,7 +45,7 @@ app.get('/api/v1/news', async (req, res) => {
 // GET breaking news
 app.get('/api/v1/news/breaking', async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM news WHERE is_breaking = true");
+    const result = await pool.query("SELECT * FROM news WHERE is_breaking = true ORDER BY created_at DESC");
     res.json({ data: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -53,13 +53,14 @@ app.get('/api/v1/news/breaking', async (req, res) => {
 });
 
 // POST - create article
+// ✅ FIX: Added pdf_url to INSERT query
 app.post('/api/v1/news', async (req, res) => {
   try {
-    const { title_hi, title_en, content, category, image_url, is_breaking } = req.body;
+    const { title_hi, title_en, content, category, image_url, pdf_url, is_breaking } = req.body;
     const result = await pool.query(
-      `INSERT INTO news (title_hi, title_en, content, category, image_url, is_breaking)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [title_hi, title_en, content, category, image_url, is_breaking || false]
+      `INSERT INTO news (title_hi, title_en, content, category, image_url, pdf_url, is_breaking)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [title_hi, title_en, content, category, image_url || null, pdf_url || null, is_breaking || false]
     );
     res.status(201).json({ data: result.rows[0] });
   } catch (err) {
@@ -68,13 +69,14 @@ app.post('/api/v1/news', async (req, res) => {
 });
 
 // PUT - update article
+// ✅ FIX: Added pdf_url to UPDATE query
 app.put('/api/v1/news/:id', async (req, res) => {
   try {
-    const { title_hi, title_en, content, category, image_url, is_breaking } = req.body;
+    const { title_hi, title_en, content, category, image_url, pdf_url, is_breaking } = req.body;
     const result = await pool.query(
       `UPDATE news SET title_hi=$1, title_en=$2, content=$3, category=$4,
-       image_url=$5, is_breaking=$6 WHERE id=$7 RETURNING *`,
-      [title_hi, title_en, content, category, image_url, is_breaking, req.params.id]
+       image_url=$5, pdf_url=$6, is_breaking=$7 WHERE id=$8 RETURNING *`,
+      [title_hi, title_en, content, category, image_url || null, pdf_url || null, is_breaking, req.params.id]
     );
     res.json({ data: result.rows[0] });
   } catch (err) {
@@ -93,13 +95,15 @@ app.delete('/api/v1/news/:id', async (req, res) => {
 });
 
 // POST - upload image or PDF to Supabase Storage
+// ✅ FIX: Returns file type in response so frontend knows what was uploaded
 app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file provided' });
 
     const fileName = `${Date.now()}-${file.originalname}`;
-    const bucket = file.mimetype === 'application/pdf' ? 'pdfs' : 'images';
+    const isPdf = file.mimetype === 'application/pdf';
+    const bucket = isPdf ? 'pdfs' : 'images';
 
     const { error } = await supabase.storage
       .from(bucket)
@@ -111,7 +115,8 @@ app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
       .from(bucket)
       .getPublicUrl(fileName);
 
-    res.json({ url: publicUrl });
+    // ✅ FIX: Return fileType so the admin UI knows which field to populate (image_url or pdf_url)
+    res.json({ url: publicUrl, fileType: isPdf ? 'pdf' : 'image' });
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ error: err.message });

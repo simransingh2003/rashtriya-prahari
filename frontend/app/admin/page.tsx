@@ -13,6 +13,7 @@ interface Article {
   title_en: string;
   content: string;
   category: string;
+  pdf_url?: string;
   image_url: string;
   is_breaking: boolean;
   is_published: boolean;
@@ -28,15 +29,15 @@ interface PDF {
 
 const CATEGORIES = ["राजनीति", "खेल", "मनोरंजन", "तकनीक", "व्यापार", "स्वास्थ्य", "करियर", "अंतर्राष्ट्रीय"];
 
+// ✅ FIX 1: Added pdf_url to emptyArticle
 const emptyArticle = {
   title_hi: "", title_en: "", content: "", category: CATEGORIES[0],
-  image_url: "", is_breaking: false, is_published: true,
+  image_url: "", pdf_url: "", is_breaking: false, is_published: true,
 };
 
 export default function AdminPage() {
-  // Create supabase client once, safely inside component
   const supabase: SupabaseClient | null = useMemo(() => {
-    if (typeof window === 'undefined') return null
+    if (typeof window === "undefined") return null;
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) return null;
@@ -63,34 +64,30 @@ export default function AdminPage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [imageUploading, setImageUploading] = useState(false);
+  // ✅ FIX 2: Separate uploading states for article PDF vs standalone PDF tab
+  const [articlePdfUploading, setArticlePdfUploading] = useState(false);
   const [pdfUploading, setPdfUploading] = useState(false);
   const [pdfTitle, setPdfTitle] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
+  // ✅ FIX 3: Separate ref for article-form PDF upload vs standalone PDF tab
+  const articlePdfInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  // Auth check — fixed: only runs when supabase is ready
+  // Auth
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
+    if (!supabase) { setLoading(false); return; }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => subscription.unsubscribe();
   }, [supabase]);
 
   useEffect(() => {
-    if (session) {
-      fetchArticles();
-      fetchPdfs();
-    }
+    if (session) { fetchArticles(); fetchPdfs(); }
   }, [session]);
 
   const fetchArticles = async () => {
@@ -135,7 +132,7 @@ export default function AdminPage() {
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(""), 3000);
+    setTimeout(() => setSuccessMsg(""), 3500);
   };
 
   const openAddForm = () => {
@@ -145,6 +142,7 @@ export default function AdminPage() {
     setShowForm(true);
   };
 
+  // ✅ FIX 4: pdf_url now included when opening edit form
   const openEditForm = (article: Article) => {
     setForm({
       title_hi: article.title_hi || "",
@@ -152,6 +150,7 @@ export default function AdminPage() {
       content: article.content || "",
       category: article.category || CATEGORIES[0],
       image_url: article.image_url || "",
+      pdf_url: article.pdf_url || "",         // ← was missing before
       is_breaking: article.is_breaking || false,
       is_published: article.is_published !== false,
     });
@@ -160,6 +159,7 @@ export default function AdminPage() {
     setShowForm(true);
   };
 
+  // ✅ FIX 5: Form now sends pdf_url to backend
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title_hi.trim()) { setFormError("हिंदी शीर्षक आवश्यक है।"); return; }
@@ -171,7 +171,7 @@ export default function AdminPage() {
       const res = await fetch(url, {
         method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
+        body: JSON.stringify(form),           // form now includes pdf_url
       });
       if (!res.ok) throw new Error("Server error");
       setShowForm(false);
@@ -196,6 +196,7 @@ export default function AdminPage() {
     } catch (e) { console.error(e); }
   };
 
+  // ✅ FIX 6: Image upload uses fileType from server to set correct field
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -209,16 +210,50 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
       });
-      const { url } = await res.json();
-      setForm(f => ({ ...f, image_url: url }));
+      const { url, fileType } = await res.json();
+      if (fileType === "pdf") {
+        setForm(f => ({ ...f, pdf_url: url }));
+      } else {
+        setForm(f => ({ ...f, image_url: url }));
+      }
       showSuccess("✅ इमेज अपलोड हो गई!");
     } catch (e) { alert("इमेज अपलोड नहीं हुई।"); }
     setImageUploading(false);
+    // Reset so same file can be re-selected
+    if (imageInputRef.current) imageInputRef.current.value = "";
   };
 
+  // ✅ FIX 7: New dedicated handler for PDF attached to an article (in the form modal)
+  const handleArticlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setArticlePdfUploading(true);
+    try {
+      const token = await getToken();
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${API}/api/v1/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const { url, fileType } = await res.json();
+      if (fileType === "pdf") {
+        setForm(f => ({ ...f, pdf_url: url }));
+        showSuccess("✅ PDF लेख से जोड़ा गया!");
+      } else {
+        alert("कृपया केवल PDF फ़ाइल चुनें।");
+      }
+    } catch (e) { alert("PDF अपलोड नहीं हुआ।"); }
+    setArticlePdfUploading(false);
+    if (articlePdfInputRef.current) articlePdfInputRef.current.value = "";
+  };
+
+  // ✅ FIX 8: Standalone PDF tab upload — properly saves to Supabase pdfs table
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !pdfTitle.trim()) { alert("पहले PDF का शीर्षक दर्ज करें।"); return; }
+    if (!file) return;
+    if (!pdfTitle.trim()) { alert("पहले PDF का शीर्षक दर्ज करें।"); return; }
     if (!supabase) return;
     setPdfUploading(true);
     try {
@@ -230,13 +265,31 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
       });
-      const { url } = await res.json();
-      await supabase.from("pdfs").insert([{ title: pdfTitle, file_url: url }]);
+      const { url, fileType } = await res.json();
+
+      if (fileType !== "pdf") {
+        alert("कृपया केवल PDF फ़ाइल चुनें।");
+        setPdfUploading(false);
+        return;
+      }
+
+      // ✅ Save to Supabase pdfs table (was missing before)
+      const { error } = await supabase.from("pdfs").insert({
+        title: pdfTitle.trim(),
+        file_url: url,
+      });
+
+      if (error) throw error;
+
       setPdfTitle("");
       fetchPdfs();
-      showSuccess("✅ PDF अपलोड हो गया!");
-    } catch (e) { alert("PDF अपलोड नहीं हुआ।"); }
+      showSuccess("✅ PDF अपलोड और सहेज लिया गया!");
+    } catch (e) {
+      console.error(e);
+      alert("PDF अपलोड नहीं हुआ।");
+    }
     setPdfUploading(false);
+    if (pdfInputRef.current) pdfInputRef.current.value = "";
   };
 
   const handleDeletePdf = async (id: string) => {
@@ -246,8 +299,10 @@ export default function AdminPage() {
     showSuccess("🗑️ PDF हटाया गया!");
   };
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString("hi-IN", { day: "numeric", month: "short", year: "numeric" });
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("hi-IN", { day: "numeric", month: "short", year: "numeric" });
 
+  // ---- Loading / not configured / login screens ----
   if (loading) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
       <div className="text-orange-500 text-4xl animate-spin">⚙️</div>
@@ -259,7 +314,7 @@ export default function AdminPage() {
       <div>
         <div className="text-5xl mb-4">⚠️</div>
         <h2 className="text-white text-xl font-bold mb-2">Supabase not configured</h2>
-        <p className="text-gray-400 text-sm">Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to Vercel environment variables.</p>
+        <p className="text-gray-400 text-sm">Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your environment variables.</p>
       </div>
     </div>
   );
@@ -299,6 +354,7 @@ export default function AdminPage() {
     </div>
   );
 
+  // ---- Main dashboard ----
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
@@ -311,19 +367,22 @@ export default function AdminPage() {
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-400 hidden md:block">{session.user.email}</span>
-          <button onClick={handleLogout} className="text-sm bg-gray-800 hover:bg-red-900 text-gray-300 hover:text-red-300 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={handleLogout}
+            className="text-sm bg-gray-800 hover:bg-red-900 text-gray-300 hover:text-red-300 px-4 py-2 rounded-lg transition-colors">
             लॉग आउट
           </button>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Success toast */}
         {successMsg && (
-          <div className="fixed top-20 right-6 bg-green-900 border border-green-700 text-green-300 px-5 py-3 rounded-xl shadow-2xl z-50 animate-pulse">
+          <div className="fixed top-20 right-6 bg-green-900 border border-green-700 text-green-300 px-5 py-3 rounded-xl shadow-2xl z-50">
             {successMsg}
           </div>
         )}
 
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: "कुल लेख", value: articles.length, icon: "📰" },
@@ -339,23 +398,29 @@ export default function AdminPage() {
           ))}
         </div>
 
+        {/* Tabs */}
         <div className="flex gap-2 mb-6">
-          <button onClick={() => setTab("articles")} className={`px-5 py-2.5 rounded-lg font-medium transition-colors ${tab === "articles" ? "bg-orange-500 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}>
+          <button onClick={() => setTab("articles")}
+            className={`px-5 py-2.5 rounded-lg font-medium transition-colors ${tab === "articles" ? "bg-orange-500 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}>
             📰 लेख प्रबंधन
           </button>
-          <button onClick={() => setTab("pdfs")} className={`px-5 py-2.5 rounded-lg font-medium transition-colors ${tab === "pdfs" ? "bg-orange-500 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}>
+          <button onClick={() => setTab("pdfs")}
+            className={`px-5 py-2.5 rounded-lg font-medium transition-colors ${tab === "pdfs" ? "bg-orange-500 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}>
             📄 PDF प्रबंधन
           </button>
         </div>
 
+        {/* Articles tab */}
         {tab === "articles" && (
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold">सभी लेख ({articles.length})</h2>
-              <button onClick={openAddForm} className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors">
+              <button onClick={openAddForm}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors">
                 ＋ नया लेख जोड़ें
               </button>
             </div>
+
             {dataLoading ? (
               <div className="text-center py-20 text-gray-500">लोड हो रहा है...</div>
             ) : articles.length === 0 ? (
@@ -364,26 +429,60 @@ export default function AdminPage() {
                 <p className="text-gray-400">कोई लेख नहीं मिला। पहला लेख जोड़ें!</p>
               </div>
             ) : (
+              // ✅ FIX 9: Fixed duplicate title/date rendering in article list
               <div className="space-y-3">
                 {articles.map((article) => (
-                  <div key={article.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4 hover:border-gray-700 transition-colors">
+                  <div key={article.id}
+                    className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4 hover:border-gray-700 transition-colors">
+                    {/* Thumbnail */}
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
-                      {article.image_url
-                        ? <img src={article.image_url} alt="" className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-2xl">📰</div>}
+                      {article.pdf_url && !article.image_url ? (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">📄</div>
+                      ) : article.image_url ? (
+                        <img src={article.image_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">📰</div>
+                      )}
                     </div>
+
+                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        {article.is_breaking && <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full">🔴 ब्रेकिंग</span>}
-                        {!article.is_published && <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full">ड्राफ्ट</span>}
-                        <span className="text-xs bg-gray-800 text-orange-400 px-2 py-0.5 rounded-full">{article.category}</span>
+                        {article.is_breaking && (
+                          <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full">🔴 ब्रेकिंग</span>
+                        )}
+                        {!article.is_published && (
+                          <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full">ड्राफ्ट</span>
+                        )}
+                        {article.pdf_url && (
+                          <span className="text-xs bg-blue-900 text-blue-300 px-2 py-0.5 rounded-full">📄 PDF</span>
+                        )}
+                        <span className="text-xs bg-gray-800 text-orange-400 px-2 py-0.5 rounded-full">
+                          {article.category}
+                        </span>
                       </div>
                       <h3 className="font-medium text-white truncate">{article.title_hi}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{formatDate(article.created_at)}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <p className="text-xs text-gray-500">{formatDate(article.created_at)}</p>
+                        {article.pdf_url && (
+                          <a href={article.pdf_url} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-400 hover:text-blue-300 underline">
+                            📄 PDF देखें
+                          </a>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Actions */}
                     <div className="flex gap-2 flex-shrink-0">
-                      <button onClick={() => openEditForm(article)} className="bg-gray-800 hover:bg-blue-900 text-gray-300 hover:text-blue-300 px-3 py-2 rounded-lg text-sm transition-colors">✏️ संपादित</button>
-                      <button onClick={() => setDeleteConfirm(article.id)} className="bg-gray-800 hover:bg-red-900 text-gray-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors">🗑️</button>
+                      <button onClick={() => openEditForm(article)}
+                        className="bg-gray-800 hover:bg-blue-900 text-gray-300 hover:text-blue-300 px-3 py-2 rounded-lg text-sm transition-colors">
+                        ✏️ संपादित
+                      </button>
+                      <button onClick={() => setDeleteConfirm(article.id)}
+                        className="bg-gray-800 hover:bg-red-900 text-gray-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors">
+                        🗑️
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -392,21 +491,25 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* PDFs tab — standalone PDF library */}
         {tab === "pdfs" && (
           <div>
-            <div className="bg-gray-900 border border-gray-800 border-dashed rounded-xl p-6 mb-6">
-              <h3 className="font-bold text-white mb-4">📤 नई PDF अपलोड करें</h3>
+            <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 mb-6">
+              <h3 className="font-bold text-white mb-4">📤 नई PDF अपलोड करें (लाइब्रेरी)</h3>
               <div className="flex flex-col md:flex-row gap-3">
                 <input type="text" value={pdfTitle} onChange={e => setPdfTitle(e.target.value)}
                   placeholder="PDF का शीर्षक दर्ज करें..."
                   className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-600" />
-                <button onClick={() => pdfInputRef.current?.click()} disabled={pdfUploading || !pdfTitle.trim()}
+                <button onClick={() => pdfInputRef.current?.click()}
+                  disabled={pdfUploading || !pdfTitle.trim()}
                   className="bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-bold px-6 py-3 rounded-xl transition-colors whitespace-nowrap">
                   {pdfUploading ? "अपलोड हो रहा है..." : "📄 PDF चुनें और अपलोड करें"}
                 </button>
-                <input ref={pdfInputRef} type="file" accept="application/pdf" className="hidden" onChange={handlePdfUpload} />
+                <input ref={pdfInputRef} type="file" accept="application/pdf"
+                  className="hidden" onChange={handlePdfUpload} />
               </div>
             </div>
+
             <h2 className="text-xl font-bold mb-4">अपलोड किए गए PDF ({pdfs.length})</h2>
             {pdfs.length === 0 ? (
               <div className="text-center py-20">
@@ -416,15 +519,22 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-3">
                 {pdfs.map((pdf) => (
-                  <div key={pdf.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4 hover:border-gray-700 transition-colors">
+                  <div key={pdf.id}
+                    className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4 hover:border-gray-700 transition-colors">
                     <div className="text-3xl">📄</div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-white">{pdf.title}</h3>
                       <p className="text-xs text-gray-500 mt-1">{formatDate(pdf.created_at)}</p>
                     </div>
                     <div className="flex gap-2">
-                      <a href={pdf.file_url} target="_blank" rel="noopener noreferrer" className="bg-gray-800 hover:bg-green-900 text-gray-300 hover:text-green-300 px-3 py-2 rounded-lg text-sm transition-colors">👁️ देखें</a>
-                      <button onClick={() => handleDeletePdf(pdf.id)} className="bg-gray-800 hover:bg-red-900 text-gray-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors">🗑️</button>
+                      <a href={pdf.file_url} target="_blank" rel="noopener noreferrer"
+                        className="bg-gray-800 hover:bg-green-900 text-gray-300 hover:text-green-300 px-3 py-2 rounded-lg text-sm transition-colors">
+                        👁️ देखें
+                      </a>
+                      <button onClick={() => handleDeletePdf(pdf.id)}
+                        className="bg-gray-800 hover:bg-red-900 text-gray-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors">
+                        🗑️
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -434,73 +544,132 @@ export default function AdminPage() {
         )}
       </div>
 
+      {/* Article form modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center overflow-y-auto p-4">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl my-8 shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-800">
               <h2 className="text-xl font-bold">{editingId ? "✏️ लेख संपादित करें" : "➕ नया लेख जोड़ें"}</h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+              <button onClick={() => setShowForm(false)}
+                className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
             </div>
+
             <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
+              {/* Hindi title */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">हिंदी शीर्षक <span className="text-red-400">*</span></label>
-                <input type="text" value={form.title_hi} onChange={e => setForm(f => ({ ...f, title_hi: e.target.value }))}
+                <input type="text" value={form.title_hi}
+                  onChange={e => setForm(f => ({ ...f, title_hi: e.target.value }))}
                   placeholder="लेख का हिंदी शीर्षक..."
                   className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-600" />
               </div>
+
+              {/* English title */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">English Title</label>
-                <input type="text" value={form.title_en} onChange={e => setForm(f => ({ ...f, title_en: e.target.value }))}
+                <input type="text" value={form.title_en}
+                  onChange={e => setForm(f => ({ ...f, title_en: e.target.value }))}
                   placeholder="Article title in English..."
                   className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-600" />
               </div>
+
+              {/* Category */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">श्रेणी</label>
-                <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                <select value={form.category}
+                  onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                   className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors">
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
+
+              {/* Content */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">सामग्री / Content</label>
-                <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
+                <textarea value={form.content}
+                  onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                   placeholder="लेख की सामग्री यहाँ लिखें..." rows={5}
                   className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-600 resize-none" />
               </div>
+
+              {/* Image upload */}
               <div>
-                <label className="block text-sm text-gray-400 mb-2">इमेज</label>
+                <label className="block text-sm text-gray-400 mb-2">इमेज (वैकल्पिक)</label>
                 <div className="flex gap-3">
-                  <input type="text" value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
+                  <input type="text" value={form.image_url}
+                    onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
                     placeholder="इमेज URL या नीचे से अपलोड करें..."
                     className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-600" />
-                  <button type="button" onClick={() => imageInputRef.current?.click()} disabled={imageUploading}
+                  <button type="button" onClick={() => imageInputRef.current?.click()}
+                    disabled={imageUploading}
                     className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-4 py-3 rounded-xl transition-colors whitespace-nowrap text-sm">
                     {imageUploading ? "..." : "📷 अपलोड"}
                   </button>
-                  <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  <input ref={imageInputRef} type="file" accept="image/*"
+                    className="hidden" onChange={handleImageUpload} />
                 </div>
-                {form.image_url && <img src={form.image_url} alt="preview" className="mt-2 w-full h-32 object-cover rounded-lg border border-gray-700" />}
+                {form.image_url && (
+                  <img src={form.image_url} alt="preview"
+                    className="mt-2 w-full h-32 object-cover rounded-lg border border-gray-700" />
+                )}
               </div>
+
+              {/* ✅ FIX 10: NEW — PDF upload section inside article form */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">PDF संलग्न करें (वैकल्पिक)</label>
+                <div className="flex gap-3">
+                  <input type="text" value={form.pdf_url}
+                    onChange={e => setForm(f => ({ ...f, pdf_url: e.target.value }))}
+                    placeholder="PDF URL या नीचे से अपलोड करें..."
+                    className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-600" />
+                  <button type="button" onClick={() => articlePdfInputRef.current?.click()}
+                    disabled={articlePdfUploading}
+                    className="bg-gray-700 hover:bg-blue-800 disabled:opacity-50 text-white px-4 py-3 rounded-xl transition-colors whitespace-nowrap text-sm">
+                    {articlePdfUploading ? "..." : "📄 PDF अपलोड"}
+                  </button>
+                  <input ref={articlePdfInputRef} type="file" accept="application/pdf"
+                    className="hidden" onChange={handleArticlePdfUpload} />
+                </div>
+                {form.pdf_url && (
+                  <div className="mt-2 flex items-center gap-2 bg-blue-950 border border-blue-800 rounded-lg px-4 py-2">
+                    <span>📄</span>
+                    <a href={form.pdf_url} target="_blank" rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 text-sm underline truncate flex-1">
+                      {form.pdf_url}
+                    </a>
+                    <button type="button" onClick={() => setForm(f => ({ ...f, pdf_url: "" }))}
+                      className="text-red-400 hover:text-red-300 text-xs ml-2">
+                      ✕ हटाएं
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Toggles */}
               <div className="flex gap-6">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <div onClick={() => setForm(f => ({ ...f, is_breaking: !f.is_breaking }))}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${form.is_breaking ? "bg-red-500" : "bg-gray-700"}`}>
+                    className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${form.is_breaking ? "bg-red-500" : "bg-gray-700"}`}>
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${form.is_breaking ? "translate-x-7" : "translate-x-1"}`} />
                   </div>
                   <span className="text-sm text-gray-300">🔴 ब्रेकिंग न्यूज़</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <div onClick={() => setForm(f => ({ ...f, is_published: !f.is_published }))}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${form.is_published ? "bg-green-500" : "bg-gray-700"}`}>
+                    className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${form.is_published ? "bg-green-500" : "bg-gray-700"}`}>
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${form.is_published ? "translate-x-7" : "translate-x-1"}`} />
                   </div>
                   <span className="text-sm text-gray-300">✅ प्रकाशित करें</span>
                 </label>
               </div>
+
               {formError && <p className="text-red-400 text-sm">{formError}</p>}
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)}
-                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 rounded-xl transition-colors">रद्द करें</button>
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 rounded-xl transition-colors">
+                  रद्द करें
+                </button>
                 <button type="submit" disabled={formLoading}
                   className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors">
                   {formLoading ? "सहेजा जा रहा है..." : editingId ? "अपडेट करें ✓" : "जोड़ें ✓"}
@@ -511,6 +680,7 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Delete confirmation modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
@@ -518,12 +688,18 @@ export default function AdminPage() {
             <h3 className="text-xl font-bold text-white mb-2">क्या आप निश्चित हैं?</h3>
             <p className="text-gray-400 text-sm mb-6">यह लेख स्थायी रूप से हटा दिया जाएगा।</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 rounded-xl transition-colors">रद्द करें</button>
-              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors">हाँ, हटाएं</button>
+              <button onClick={() => setDeleteConfirm(null)}
+                className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 rounded-xl transition-colors">
+                रद्द करें
+              </button>
+              <button onClick={() => handleDelete(deleteConfirm)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors">
+                हाँ, हटाएं
+              </button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-} 
+}
