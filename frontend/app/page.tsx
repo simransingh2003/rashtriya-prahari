@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Article {
@@ -313,29 +314,42 @@ export default function Home() {
             <div className="flex items-center justify-between py-3 gap-3">
 
               {/* Logo */}
-              <div className="flex items-center gap-2 shrink-0 min-w-0">
-                {/* SVG logo — falls back to styled "रा" if image missing */}
+              <div className="flex items-center gap-2 shrink-0">
                 <img
                   src="/logo.svg"
-                  alt="राष्ट्रीय प्रहरी भारत"
-                  className="w-10 h-10 rounded-xl shadow-lg shrink-0"
+                  alt="logo"
+                  className="w-11 h-11 rounded-full shadow-lg shrink-0 object-cover border-2 border-orange-200 dark:border-orange-800"
                   onError={e => {
-                    const el = e.currentTarget;
+                    const el = e.currentTarget as HTMLImageElement;
                     el.style.display = 'none';
-                    const fallback = el.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = 'flex';
+                    const fb = el.nextElementSibling as HTMLElement;
+                    if (fb) fb.style.display = 'flex';
                   }}
                 />
-                {/* Fallback orange "रा" block — hidden by default */}
-                <div style={{ display: 'none' }}
-                  className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shrink-0">
+                <div style={{display:'none'}}
+                  className="w-11 h-11 bg-gradient-to-br from-orange-500 to-red-500 rounded-full items-center justify-center text-white font-black text-lg shadow-lg shrink-0">
                   रा
                 </div>
-                <div className="min-w-0">
-                  <h1 className="font-black text-base sm:text-lg leading-none bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent news-serif whitespace-nowrap">
+                <div>
+                  <h1 style={{
+                    fontFamily:"'Playfair Display','Noto Serif Devanagari',serif",
+                    fontWeight:900,
+                    lineHeight:'1.4',
+                    paddingTop:'3px',
+                    paddingBottom:'3px',
+                    background:'linear-gradient(to right,#f97316,#ef4444)',
+                    WebkitBackgroundClip:'text',
+                    WebkitTextFillColor:'transparent',
+                    backgroundClip:'text',
+                    whiteSpace:'nowrap',
+                    fontSize:'clamp(15px,3vw,20px)',
+                    display:'block',
+                  }}>
                     राष्ट्रीय प्रहरी भारत
                   </h1>
-                  <p className="text-xs text-gray-400 hidden sm:block whitespace-nowrap">एक राष्ट्र पहली • India's Trusted News</p>
+                  <p className="text-xs text-gray-400 hidden sm:block whitespace-nowrap" style={{lineHeight:'1.4'}}>
+                    एक राष्ट्र पहली • India's Trusted News
+                  </p>
                 </div>
               </div>
 
@@ -434,7 +448,7 @@ export default function Home() {
                 {/* Hero article */}
                 {hero && (
                   <div className="fade-up">
-                    <HeroCard article={hero} onClick={() => setSelectedArticle(hero)} />
+                    <Link href={`/news/${hero.id}`} className="block"><HeroCard article={hero} onClick={() => {}} /></Link>
                   </div>
                 )}
 
@@ -453,7 +467,7 @@ export default function Home() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {grid.map((article, i) => (
                     <div key={article.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-                      <GridCard article={article} onClick={() => setSelectedArticle(article)} />
+                      <Link href={`/news/${article.id}`} className="block"><GridCard article={article} onClick={() => {}} /></Link>
                     </div>
                   ))}
                 </div>
@@ -486,7 +500,7 @@ export default function Home() {
                     <h3 className="font-black text-gray-900 dark:text-white news-serif">ट्रेंडिंग</h3>
                   </div>
                   {trending.map((a, i) => (
-                    <CompactCard key={a.id} article={a} rank={i + 1} onClick={() => setSelectedArticle(a)} />
+                    <Link key={a.id} href={`/news/${a.id}`} className="block"><CompactCard article={a} rank={i + 1} onClick={() => {}} /></Link>
                   ))}
                 </div>
 
