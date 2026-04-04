@@ -223,10 +223,20 @@ export default function AdminPage() {
     if (imageInputRef.current) imageInputRef.current.value = "";
   };
 
-  // ✅ FIX 7: New dedicated handler for PDF attached to an article (in the form modal)
+  // ✅ FIX 7: PDF upload for article form — validates by extension before uploading
   const handleArticlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // ✅ Validate by extension BEFORE uploading (works for Hindi filenames too)
+    const isPdf = file.name.toLowerCase().endsWith(".pdf") ||
+                  file.type === "application/pdf";
+    if (!isPdf) {
+      alert("कृपया केवल PDF फ़ाइल चुनें।");
+      if (articlePdfInputRef.current) articlePdfInputRef.current.value = "";
+      return;
+    }
+
     setArticlePdfUploading(true);
     try {
       const token = await getToken();
@@ -237,12 +247,12 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
       });
-      const { url, fileType } = await res.json();
-      if (fileType === "pdf") {
+      const { url } = await res.json();
+      if (url) {
         setForm(f => ({ ...f, pdf_url: url }));
         showSuccess("✅ PDF लेख से जोड़ा गया!");
       } else {
-        alert("कृपया केवल PDF फ़ाइल चुनें।");
+        alert("PDF अपलोड नहीं हुआ। दोबारा कोशिश करें।");
       }
     } catch (e) { alert("PDF अपलोड नहीं हुआ।"); }
     setArticlePdfUploading(false);
@@ -254,6 +264,9 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!pdfTitle.trim()) { alert("पहले PDF का शीर्षक दर्ज करें।"); return; }
+    // ✅ Validate by extension before uploading
+    const isPdfFile = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+    if (!isPdfFile) { alert("कृपया केवल PDF फ़ाइल चुनें।"); return; }
     if (!supabase) return;
     setPdfUploading(true);
     try {
@@ -265,10 +278,10 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
       });
-      const { url, fileType } = await res.json();
+      const { url } = await res.json();
 
-      if (fileType !== "pdf") {
-        alert("कृपया केवल PDF फ़ाइल चुनें।");
+      if (!url) {
+        alert("PDF अपलोड नहीं हुआ। दोबारा कोशिश करें।");
         setPdfUploading(false);
         return;
       }

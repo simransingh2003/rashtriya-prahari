@@ -102,7 +102,10 @@ app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
     if (!file) return res.status(400).json({ error: 'No file provided' });
 
     const fileName = `${Date.now()}-${file.originalname}`;
-    const isPdf = file.mimetype === 'application/pdf';
+    // ✅ FIX: Check both mimetype AND file extension (Hindi filenames can cause mimetype issues)
+    const isPdf = file.mimetype === 'application/pdf' ||
+                  file.mimetype === 'application/octet-stream' && file.originalname.toLowerCase().endsWith('.pdf') ||
+                  file.originalname.toLowerCase().endsWith('.pdf');
     const bucket = isPdf ? 'pdfs' : 'images';
 
     const { error } = await supabase.storage
