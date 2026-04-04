@@ -101,7 +101,15 @@ app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file provided' });
 
-    const fileName = `${Date.now()}-${file.originalname}`;
+    // ✅ FIX: Sanitize filename — remove non-ASCII chars (Hindi etc.) to prevent Supabase key corruption
+    const ext = file.originalname.split('.').pop()?.toLowerCase() || 'bin';
+    const safeName = file.originalname
+      .replace(/[^\x00-\x7F]/g, '')   // strip non-ASCII (Hindi characters)
+      .replace(/\s+/g, '-')            // spaces → dashes
+      .replace(/[^a-zA-Z0-9.\-_]/g, '') // remove anything else unsafe
+      .replace(/^-+|-+$/g, '')         // trim leading/trailing dashes
+      || 'file';                        // fallback if name becomes empty
+    const fileName = `${Date.now()}-${safeName}.${ext}`.replace(/\.+/g, '.');
     // ✅ FIX: Check both mimetype AND file extension (Hindi filenames can cause mimetype issues)
     const isPdf = file.mimetype === 'application/pdf' ||
                   file.mimetype === 'application/octet-stream' && file.originalname.toLowerCase().endsWith('.pdf') ||
