@@ -313,15 +313,29 @@ export default function Home() {
             <div className="flex items-center justify-between py-3 gap-3">
 
               {/* Logo */}
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-orange-200 dark:shadow-orange-900/30">
+              <div className="flex items-center gap-2 shrink-0 min-w-0">
+                {/* SVG logo — falls back to styled "रा" if image missing */}
+                <img
+                  src="/logo.svg"
+                  alt="राष्ट्रीय प्रहरी भारत"
+                  className="w-10 h-10 rounded-xl shadow-lg shrink-0"
+                  onError={e => {
+                    const el = e.currentTarget;
+                    el.style.display = 'none';
+                    const fallback = el.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                {/* Fallback orange "रा" block — hidden by default */}
+                <div style={{ display: 'none' }}
+                  className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shrink-0">
                   रा
                 </div>
-                <div className="hidden sm:block">
-                  <h1 className="font-black text-lg leading-none bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent news-serif">
+                <div className="min-w-0">
+                  <h1 className="font-black text-base sm:text-lg leading-none bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent news-serif whitespace-nowrap">
                     राष्ट्रीय प्रहरी भारत
                   </h1>
-                  <p className="text-xs text-gray-400">एक राष्ट्र पहली • India's Trusted News</p>
+                  <p className="text-xs text-gray-400 hidden sm:block whitespace-nowrap">एक राष्ट्र पहली • India's Trusted News</p>
                 </div>
               </div>
 
