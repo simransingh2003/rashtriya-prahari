@@ -17,7 +17,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Middleware
 app.use(cors({
-  origin: "rashtriya-prahari.vercel.app",
+  origin: "https://rashtriya-prahari.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
 }));
 app.use(express.json());
