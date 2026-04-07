@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 const API = process.env.NEXT_PUBLIC_API_URL;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rashtriya-prahari.vercel.app';
 
@@ -7,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let articles: { id: string; created_at: string }[] = [];
 
   try {
-    const res = await fetch(`${API}/api/v1/news`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API}/api/v1/news`);
     const { data } = await res.json();
     articles = data || [];
   } catch {
