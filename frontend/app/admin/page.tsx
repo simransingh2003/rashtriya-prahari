@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import RichEditor from '@/components/RichEditor';
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
@@ -29,7 +30,6 @@ interface PDF {
 
 const CATEGORIES = ["राजनीति", "खेल", "मनोरंजन", "तकनीक", "व्यापार", "स्वास्थ्य", "करियर", "अंतर्राष्ट्रीय"];
 
-// ✅ FIX 1: Added pdf_url to emptyArticle
 const emptyArticle = {
   title_hi: "", title_en: "", content: "", category: CATEGORIES[0],
   image_url: "", pdf_url: "", is_breaking: false, is_published: true,
@@ -64,18 +64,15 @@ export default function AdminPage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [imageUploading, setImageUploading] = useState(false);
-  // ✅ FIX 2: Separate uploading states for article PDF vs standalone PDF tab
   const [articlePdfUploading, setArticlePdfUploading] = useState(false);
   const [pdfUploading, setPdfUploading] = useState(false);
   const [pdfTitle, setPdfTitle] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
-  // ✅ FIX 3: Separate ref for article-form PDF upload vs standalone PDF tab
   const articlePdfInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  // Auth
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -142,7 +139,6 @@ export default function AdminPage() {
     setShowForm(true);
   };
 
-  // ✅ FIX 4: pdf_url now included when opening edit form
   const openEditForm = (article: Article) => {
     setForm({
       title_hi: article.title_hi || "",
@@ -150,7 +146,7 @@ export default function AdminPage() {
       content: article.content || "",
       category: article.category || CATEGORIES[0],
       image_url: article.image_url || "",
-      pdf_url: article.pdf_url || "",         // ← was missing before
+      pdf_url: article.pdf_url || "",
       is_breaking: article.is_breaking || false,
       is_published: article.is_published !== false,
     });
@@ -159,7 +155,6 @@ export default function AdminPage() {
     setShowForm(true);
   };
 
-  // ✅ FIX 5: Form now sends pdf_url to backend
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title_hi.trim()) { setFormError("हिंदी शीर्षक आवश्यक है।"); return; }
@@ -171,7 +166,7 @@ export default function AdminPage() {
       const res = await fetch(url, {
         method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),           // form now includes pdf_url
+        body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error("Server error");
       setShowForm(false);
@@ -196,7 +191,6 @@ export default function AdminPage() {
     } catch (e) { console.error(e); }
   };
 
-  // ✅ FIX 6: Image upload uses fileType from server to set correct field
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -219,24 +213,18 @@ export default function AdminPage() {
       showSuccess("✅ इमेज अपलोड हो गई!");
     } catch (e) { alert("इमेज अपलोड नहीं हुई।"); }
     setImageUploading(false);
-    // Reset so same file can be re-selected
     if (imageInputRef.current) imageInputRef.current.value = "";
   };
 
-  // ✅ FIX 7: PDF upload for article form — validates by extension before uploading
   const handleArticlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // ✅ Validate by extension BEFORE uploading (works for Hindi filenames too)
-    const isPdf = file.name.toLowerCase().endsWith(".pdf") ||
-                  file.type === "application/pdf";
+    const isPdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
     if (!isPdf) {
       alert("कृपया केवल PDF फ़ाइल चुनें।");
       if (articlePdfInputRef.current) articlePdfInputRef.current.value = "";
       return;
     }
-
     setArticlePdfUploading(true);
     try {
       const token = await getToken();
@@ -259,12 +247,10 @@ export default function AdminPage() {
     if (articlePdfInputRef.current) articlePdfInputRef.current.value = "";
   };
 
-  // ✅ FIX 8: Standalone PDF tab upload — properly saves to Supabase pdfs table
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!pdfTitle.trim()) { alert("पहले PDF का शीर्षक दर्ज करें।"); return; }
-    // ✅ Validate by extension before uploading
     const isPdfFile = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
     if (!isPdfFile) { alert("कृपया केवल PDF फ़ाइल चुनें।"); return; }
     if (!supabase) return;
@@ -279,21 +265,16 @@ export default function AdminPage() {
         body: fd,
       });
       const { url } = await res.json();
-
       if (!url) {
         alert("PDF अपलोड नहीं हुआ। दोबारा कोशिश करें।");
         setPdfUploading(false);
         return;
       }
-
-      // ✅ Save to Supabase pdfs table (was missing before)
       const { error } = await supabase.from("pdfs").insert({
         title: pdfTitle.trim(),
         file_url: url,
       });
-
       if (error) throw error;
-
       setPdfTitle("");
       fetchPdfs();
       showSuccess("✅ PDF अपलोड और सहेज लिया गया!");
@@ -315,7 +296,6 @@ export default function AdminPage() {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("hi-IN", { day: "numeric", month: "short", year: "numeric" });
 
-  // ---- Loading / not configured / login screens ----
   if (loading) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
       <div className="text-orange-500 text-4xl animate-spin">⚙️</div>
@@ -367,7 +347,6 @@ export default function AdminPage() {
     </div>
   );
 
-  // ---- Main dashboard ----
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
@@ -388,7 +367,6 @@ export default function AdminPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Success toast */}
         {successMsg && (
           <div className="fixed top-20 right-6 bg-green-900 border border-green-700 text-green-300 px-5 py-3 rounded-xl shadow-2xl z-50">
             {successMsg}
@@ -423,7 +401,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* Articles tab */}
+        {/* ── Articles Tab ── */}
         {tab === "articles" && (
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -442,12 +420,10 @@ export default function AdminPage() {
                 <p className="text-gray-400">कोई लेख नहीं मिला। पहला लेख जोड़ें!</p>
               </div>
             ) : (
-              // ✅ FIX 9: Fixed duplicate title/date rendering in article list
               <div className="space-y-3">
                 {articles.map((article) => (
                   <div key={article.id}
                     className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4 hover:border-gray-700 transition-colors">
-                    {/* Thumbnail */}
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
                       {article.pdf_url && !article.image_url ? (
                         <div className="w-full h-full flex items-center justify-center text-2xl">📄</div>
@@ -457,8 +433,6 @@ export default function AdminPage() {
                         <div className="w-full h-full flex items-center justify-center text-2xl">📰</div>
                       )}
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         {article.is_breaking && (
@@ -470,9 +444,7 @@ export default function AdminPage() {
                         {article.pdf_url && (
                           <span className="text-xs bg-blue-900 text-blue-300 px-2 py-0.5 rounded-full">📄 PDF</span>
                         )}
-                        <span className="text-xs bg-gray-800 text-orange-400 px-2 py-0.5 rounded-full">
-                          {article.category}
-                        </span>
+                        <span className="text-xs bg-gray-800 text-orange-400 px-2 py-0.5 rounded-full">{article.category}</span>
                       </div>
                       <h3 className="font-medium text-white truncate">{article.title_hi}</h3>
                       <div className="flex items-center gap-3 mt-1">
@@ -485,8 +457,6 @@ export default function AdminPage() {
                         )}
                       </div>
                     </div>
-
-                    {/* Actions */}
                     <div className="flex gap-2 flex-shrink-0">
                       <button onClick={() => openEditForm(article)}
                         className="bg-gray-800 hover:bg-blue-900 text-gray-300 hover:text-blue-300 px-3 py-2 rounded-lg text-sm transition-colors">
@@ -504,7 +474,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* PDFs tab — standalone PDF library */}
+        {/* ── PDFs Tab ── */}
         {tab === "pdfs" && (
           <div>
             <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-6 mb-6">
@@ -522,7 +492,6 @@ export default function AdminPage() {
                   className="hidden" onChange={handlePdfUpload} />
               </div>
             </div>
-
             <h2 className="text-xl font-bold mb-4">अपलोड किए गए PDF ({pdfs.length})</h2>
             {pdfs.length === 0 ? (
               <div className="text-center py-20">
@@ -557,7 +526,7 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Article form modal */}
+      {/* ── Article Form Modal ── */}
       {showForm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center overflow-y-auto p-4">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl my-8 shadow-2xl">
@@ -568,6 +537,7 @@ export default function AdminPage() {
             </div>
 
             <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
+
               {/* Hindi title */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">हिंदी शीर्षक <span className="text-red-400">*</span></label>
@@ -596,13 +566,14 @@ export default function AdminPage() {
                 </select>
               </div>
 
-              {/* Content */}
+              {/* ✅ Rich Text Editor — replaces old textarea */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">सामग्री / Content</label>
-                <textarea value={form.content}
-                  onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-                  placeholder="लेख की सामग्री यहाँ लिखें..." rows={5}
-                  className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-600 resize-none" />
+                <RichEditor
+                  value={form.content}
+                  onChange={val => setForm(f => ({ ...f, content: val }))}
+                  placeholder="लेख की सामग्री यहाँ लिखें..."
+                />
               </div>
 
               {/* Image upload */}
@@ -627,7 +598,7 @@ export default function AdminPage() {
                 )}
               </div>
 
-              {/* ✅ FIX 10: NEW — PDF upload section inside article form */}
+              {/* PDF upload */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">PDF संलग्न करें (वैकल्पिक)</label>
                 <div className="flex gap-3">
@@ -693,7 +664,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Delete confirmation modal */}
+      {/* ── Delete Confirm Modal ── */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
