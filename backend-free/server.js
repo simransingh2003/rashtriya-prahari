@@ -5,7 +5,6 @@ const { createClient } = require('@supabase/supabase-js');
 const pool = require('./db');
 require('dotenv').config();
 const app = express();
-const cors = require('cors');
 app.use(cors());
 
 // Supabase client for storage
