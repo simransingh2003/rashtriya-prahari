@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const PORT = process.env.PORT 
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 const pool = require('./db');
