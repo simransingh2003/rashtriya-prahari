@@ -255,8 +255,8 @@ export default function Home() {
   useEffect(() => {
     const API = process.env.NEXT_PUBLIC_API_URL;
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}}/api/v1/news`).then(r => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}}/api/v1/news/breaking`).then(r => r.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/news`).then(r => r.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/news/breaking`).then(r => r.json()),
     ]).then(([newsRes, breakingRes]) => {
       setArticles(newsRes.data || []);
       if (breakingRes.data?.length > 0)
