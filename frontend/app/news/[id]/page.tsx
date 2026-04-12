@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import ArticleClient from './ArticleClient';
 
-const API = process.env.NEXT_PUBLIC_API_URL;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rashtriya-prahari.vercel.app';
+// ✅ Fix — works on both server and client
+const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rashtriya-prahari.vercel.app';
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80';
 
 interface Article {
