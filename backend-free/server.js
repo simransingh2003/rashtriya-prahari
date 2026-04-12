@@ -18,10 +18,17 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Middleware
 app.use(cors({
-  origin: "https://rashtriya-prahari.vercel.app",
+  origin: function(origin, callback) {
+    if (!origin || origin.includes('rashtriya-prahari.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE"],
 }));
-app.use(express.json());
+
+
 
 // Health check
 app.get('/health', (req, res) => {

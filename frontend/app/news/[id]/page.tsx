@@ -21,11 +21,14 @@ interface Article {
 async function getArticle(id: string): Promise<Article | null> {
   try {
     const res = await fetch(`${API}/api/v1/news/${id}`, { 
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(10000)
+      cache: 'no-store',
     });
     console.log('Status:', res.status, '| API:', API);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Error response:', err);
+      return null;
+    }
     const json = await res.json();
     console.log('Data received:', JSON.stringify(json).slice(0, 100));
     return json.data ?? null;
@@ -34,7 +37,6 @@ async function getArticle(id: string): Promise<Article | null> {
     return null;
   }
 }
-
 
 // ── SEO Metadata (server-side, for WhatsApp/Twitter/Google previews) ──────────
 
