@@ -55,44 +55,32 @@ function YouTubeEmbed({ videoId }: { videoId: string }) {
 
 // ── Content renderer — handles text, YouTube URLs, and regular URLs ───────────
 function ContentRenderer({ content }: { content: string }) {
-  const paragraphs = content.split('\n').filter(p => p.trim());
+  // Detect if content is HTML
+  const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
+  if (isHTML) {
+    return (
+      <div
+        className="prose prose-lg dark:prose-invert max-w-none
+          prose-headings:font-black prose-headings:text-gray-900 dark:prose-headings:text-white
+          prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed
+          prose-a:text-orange-500 prose-a:no-underline hover:prose-a:underline
+          prose-img:rounded-xl prose-img:shadow-lg"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+
+  // Plain text fallback (old articles)
+  const paragraphs = content.split('\n').filter(p => p.trim());
   return (
     <div className="space-y-4">
       {paragraphs.map((para, i) => {
-        const trimmed = para.trim();
-
-        // Check if entire paragraph is a YouTube URL
-        const ytId = getYouTubeId(trimmed);
-        if (ytId) {
-          return <YouTubeEmbed key={i} videoId={ytId} />;
-        }
-
-        // Check if paragraph contains inline URLs → linkify
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        if (urlRegex.test(trimmed)) {
-          const parts = trimmed.split(/(https?:\/\/[^\s]+)/g);
-          return (
-            <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">
-              {parts.map((part, j) => {
-                if (part.match(/^https?:\/\//)) {
-                  return (
-                    <a key={j} href={part} target="_blank" rel="noopener noreferrer"
-                      className="text-orange-500 hover:text-orange-600 underline break-all">
-                      {part}
-                    </a>
-                  );
-                }
-                return part;
-              })}
-            </p>
-          );
-        }
-
-        // Regular paragraph
+        const ytId = getYouTubeId(para.trim());
+        if (ytId) return <YouTubeEmbed key={i} videoId={ytId} />;
         return (
           <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">
-            {trimmed}
+            {para.trim()}
           </p>
         );
       })}
