@@ -68,6 +68,19 @@ app.get('/api/v1/news/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// GET related articles by category
+app.get('/api/v1/news/:id/related', async (req, res) => {
+  try {
+    const { category } = req.query;
+    const result = await pool.query(
+      `SELECT * FROM news WHERE category=$1 AND id!=$2 ORDER BY created_at DESC LIMIT 3`,
+      [category, req.params.id]
+    );
+    res.json({ data: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // POST - create article
 // ✅ FIX: Added pdf_url to INSERT query
 app.post('/api/v1/news', async (req, res) => {
