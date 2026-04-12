@@ -37,17 +37,26 @@ async function getArticle(id: string): Promise<Article | null> {
     return null;
   }
 }
+// ── Server Component ──────────────────────────────────────────────────────────
+export default async function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const article = await getArticle(id);
+  return <ArticleClient article={article} />;
+}
 
 // ── SEO Metadata (server-side, for WhatsApp/Twitter/Google previews) ──────────
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const article = await getArticle(params.id);
+// ── SEO Metadata ──────────────────────────────────────────────────────────────
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const article = await getArticle(id);
   if (!article) {
     return {
       title: 'लेख नहीं मिला | राष्ट्रीय प्रहरी भारत',
       description: 'यह लेख उपलब्ध नहीं है।',
     };
   }
+  
 
   const img = article.image_url && !article.image_url.toLowerCase().includes('.pdf')
     ? article.image_url : FALLBACK_IMG;
@@ -82,8 +91,5 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-// ── Server Component ──────────────────────────────────────────────────────────
-export default async function ArticlePage({ params }: { params: { id: string } }) {
-  const article = await getArticle(params.id);
-  return <ArticleClient article={article} />;
-}
+
+
