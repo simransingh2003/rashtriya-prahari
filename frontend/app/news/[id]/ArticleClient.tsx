@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80';
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 interface Article {
   id: string;
@@ -23,6 +24,15 @@ const getImage = (a: Article) =>
 
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+const timeAgo = (d: string) => {
+  const diff = Date.now() - new Date(d).getTime();
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor(diff / 60000);
+  if (h < 1) return `${Math.max(1, m)} मिनट पहले`;
+  if (h < 24) return `${h} घंटे पहले`;
+  return formatDate(d);
+};
 
 // ── YouTube detection + embed ─────────────────────────────────────────────────
 function getYouTubeId(url: string): string | null {
@@ -53,9 +63,8 @@ function YouTubeEmbed({ videoId }: { videoId: string }) {
   );
 }
 
-// ── Content renderer — handles text, YouTube URLs, and regular URLs ───────────
+// ── Content renderer ──────────────────────────────────────────────────────────
 function ContentRenderer({ content }: { content: string }) {
-  // Detect if content is HTML
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
@@ -71,16 +80,32 @@ function ContentRenderer({ content }: { content: string }) {
     );
   }
 
-  // Plain text fallback (old articles)
   const paragraphs = content.split('\n').filter(p => p.trim());
   return (
     <div className="space-y-4">
       {paragraphs.map((para, i) => {
-        const ytId = getYouTubeId(para.trim());
+        const trimmed = para.trim();
+        const ytId = getYouTubeId(trimmed);
         if (ytId) return <YouTubeEmbed key={i} videoId={ytId} />;
+
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        if (urlRegex.test(trimmed)) {
+          const parts = trimmed.split(/(https?:\/\/[^\s]+)/g);
+          return (
+            <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">
+              {parts.map((part, j) =>
+                part.match(/^https?:\/\//) ? (
+                  <a key={j} href={part} target="_blank" rel="noopener noreferrer"
+                    className="text-orange-500 hover:text-orange-600 underline break-all">{part}</a>
+                ) : part
+              )}
+            </p>
+          );
+        }
+
         return (
           <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">
-            {para.trim()}
+            {trimmed}
           </p>
         );
       })}
@@ -88,19 +113,14 @@ function ContentRenderer({ content }: { content: string }) {
   );
 }
 
-// ── Share button ──────────────────────────────────────────────────────────────
+// ── Share bar ─────────────────────────────────────────────────────────────────
 function ShareBar({ article }: { article: Article }) {
   const url = typeof window !== 'undefined' ? window.location.href : '';
   const text = `${article.title_hi} - राष्ट्रीय प्रहरी भारत`;
-
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`;
   const twitter = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   const facebook = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(url);
-    alert('लिंक कॉपी हो गया! ✅');
-  };
+  const copyLink = () => { navigator.clipboard.writeText(url); alert('लिंक कॉपी हो गया! ✅'); };
 
   return (
     <div className="flex flex-wrap items-center gap-3 py-4 border-t border-b border-gray-200 dark:border-gray-700 my-6">
@@ -125,11 +145,58 @@ function ShareBar({ article }: { article: Article }) {
   );
 }
 
+// ── Related Articles ──────────────────────────────────────────────────────────
+function RelatedArticles({ articleId, category }: { articleId: string; category: string }) {
+  const [related, setRelated] = useState<Article[]>([]);
+
+  useEffect(() => {
+    fetch(`${API}/api/v1/news/${articleId}/related?category=${encodeURIComponent(category)}`)
+      .then(r => r.json())
+      .then(({ data }) => setRelated(data || []))
+      .catch(console.error);
+  }, [articleId, category]);
+
+  if (related.length === 0) return null;
+
+  return (
+    <div className="mt-12 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-1 h-7 bg-orange-500 rounded-full" />
+        <h3 className="text-xl font-black text-gray-900 dark:text-white">संबंधित खबरें</h3>
+      </div>
+      <div className="grid sm:grid-cols-3 gap-4">
+        {related.map(a => {
+          const img = getImage(a);
+          return (
+            <Link key={a.id} href={`/news/${a.id}`}
+              className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+              <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                <img src={img} alt={a.title_hi}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                {a.is_breaking && (
+                  <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    🔴 ब्रेकिंग
+                  </div>
+                )}
+              </div>
+              <div className="p-3">
+                <span className="text-xs font-bold text-orange-500 uppercase">{a.category}</span>
+                <h4 className="font-bold text-gray-900 dark:text-white text-sm mt-1 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-snug">
+                  {a.title_hi}
+                </h4>
+                <p className="text-xs text-gray-400 mt-2">{timeAgo(a.created_at)}</p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main client component ─────────────────────────────────────────────────────
 export default function ArticleClient({ article }: { article: Article | null }) {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   if (!article) {
     return (
@@ -155,7 +222,7 @@ export default function ArticleClient({ article }: { article: Article | null }) 
         .news-serif { font-family: 'Playfair Display', 'Noto Serif Devanagari', serif !important; }
       `}</style>
 
-      {/* ── Top nav bar ── */}
+      {/* ── Top nav ── */}
       <header className="bg-white dark:bg-[#161b22] border-b-2 border-orange-500 shadow-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
@@ -231,9 +298,7 @@ export default function ArticleClient({ article }: { article: Article | null }) 
               <div className="text-5xl">📄</div>
               <div className="flex-1">
                 <p className="font-bold text-lg text-gray-900 dark:text-white">पूरी रिपोर्ट PDF में उपलब्ध है</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  विस्तृत जानकारी के लिए नीचे दिए गए बटन से PDF डाउनलोड करें
-                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">विस्तृत जानकारी के लिए नीचे दिए गए बटन से PDF डाउनलोड करें</p>
               </div>
               <a href={article.pdf_url} target="_blank" rel="noopener noreferrer"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm whitespace-nowrap shadow-lg">
@@ -242,6 +307,9 @@ export default function ArticleClient({ article }: { article: Article | null }) 
             </div>
           </div>
         )}
+
+        {/* ── Related Articles ── */}
+        <RelatedArticles articleId={article.id} category={article.category} />
 
         {/* Back to home */}
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
