@@ -20,16 +20,24 @@ interface Article {
 
 async function getArticle(id: string): Promise<Article | null> {
   try {
-    const res = await fetch(`${API}/api/v1/news/${id}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API}/api/v1/news/${id}`, { 
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(10000)
+    });
+    console.log('Status:', res.status, '| API:', API);
     if (!res.ok) return null;
-    const { data } = await res.json();
-    return data;
-  } catch {
+    const json = await res.json();
+    console.log('Data received:', JSON.stringify(json).slice(0, 100));
+    return json.data ?? null;
+  } catch (err) {
+    console.error('getArticle error:', err);
     return null;
   }
 }
 
+
 // ── SEO Metadata (server-side, for WhatsApp/Twitter/Google previews) ──────────
+
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const article = await getArticle(params.id);
   if (!article) {
