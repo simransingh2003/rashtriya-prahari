@@ -68,6 +68,18 @@ app.get('/api/v1/news/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// INCREMENT view count
+app.post('/api/v1/news/:id/view', async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE news SET view_count = COALESCE(view_count, 0) + 1 WHERE id=$1',
+      [req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // GET related articles by category
 app.get('/api/v1/news/:id/related', async (req, res) => {
   try {

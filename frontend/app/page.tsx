@@ -366,6 +366,9 @@ export default function Home() {
                     {n}
                   </button>
                 ))}
+                <Link href="/epaper"
+                 className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
+                  📰 ई-पेपर</Link>
               </nav>
 
               {/* Search + theme */}
