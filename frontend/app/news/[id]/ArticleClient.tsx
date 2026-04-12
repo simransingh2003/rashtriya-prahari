@@ -5,6 +5,8 @@ import Link from 'next/link';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80';
 const API = process.env.NEXT_PUBLIC_API_URL;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 interface Article {
   id: string;
@@ -18,6 +20,14 @@ interface Article {
   is_published: boolean;
   created_at: string;
   view_count?: number;
+}
+
+interface Comment {
+  id: number;
+  article_id: number;
+  name: string;
+  comment: string;
+  created_at: string;
 }
 
 const getImage = (a: Article) =>
@@ -42,10 +52,7 @@ function getYouTubeId(url: string): string | null {
     /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
   ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
+  for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
   return null;
 }
 
@@ -65,13 +72,9 @@ function TextSizeAdjuster({ size, setSize }: { size: number; setSize: (n: number
     <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1.5">
       <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">अ</span>
       <button onClick={() => setSize(Math.max(14, size - 2))}
-        className="w-6 h-6 rounded-full bg-white dark:bg-gray-700 shadow text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors text-sm font-bold flex items-center justify-center">
-        −
-      </button>
+        className="w-6 h-6 rounded-full bg-white dark:bg-gray-700 shadow text-gray-600 dark:text-gray-300 hover:bg-orange-50 transition-colors text-sm font-bold flex items-center justify-center">−</button>
       <button onClick={() => setSize(Math.min(26, size + 2))}
-        className="w-6 h-6 rounded-full bg-white dark:bg-gray-700 shadow text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors text-sm font-bold flex items-center justify-center">
-        +
-      </button>
+        className="w-6 h-6 rounded-full bg-white dark:bg-gray-700 shadow text-gray-600 dark:text-gray-300 hover:bg-orange-50 transition-colors text-sm font-bold flex items-center justify-center">+</button>
       <span className="text-lg text-gray-500 dark:text-gray-400 font-bold">अ</span>
     </div>
   );
@@ -83,33 +86,16 @@ function ContentRenderer({ content, fontSize }: { content: string; fontSize: num
   if (isHTML) {
     return (
       <div style={{ fontSize: `${fontSize}px` }}
-        className="prose prose-lg dark:prose-invert max-w-none
-          prose-headings:font-black prose-headings:text-gray-900 dark:prose-headings:text-white
-          prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed
-          prose-a:text-orange-500 prose-a:no-underline hover:prose-a:underline
-          prose-img:rounded-xl prose-img:shadow-lg"
+        className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-black prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-a:text-orange-500 prose-img:rounded-xl"
         dangerouslySetInnerHTML={{ __html: content }} />
     );
   }
-  const paragraphs = content.split('\n').filter(p => p.trim());
   return (
     <div className="space-y-4" style={{ fontSize: `${fontSize}px` }}>
-      {paragraphs.map((para, i) => {
+      {content.split('\n').filter(p => p.trim()).map((para, i) => {
         const trimmed = para.trim();
         const ytId = getYouTubeId(trimmed);
         if (ytId) return <YouTubeEmbed key={i} videoId={ytId} />;
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        if (urlRegex.test(trimmed)) {
-          const parts = trimmed.split(/(https?:\/\/[^\s]+)/g);
-          return (
-            <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              {parts.map((part, j) => part.match(/^https?:\/\//) ? (
-                <a key={j} href={part} target="_blank" rel="noopener noreferrer"
-                  className="text-orange-500 hover:text-orange-600 underline break-all">{part}</a>
-              ) : part)}
-            </p>
-          );
-        }
         return <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed">{trimmed}</p>;
       })}
     </div>
@@ -120,29 +106,17 @@ function ContentRenderer({ content, fontSize }: { content: string; fontSize: num
 function ShareBar({ article }: { article: Article }) {
   const url = typeof window !== 'undefined' ? window.location.href : '';
   const text = `${article.title_hi} - राष्ट्रीय प्रहरी भारत`;
-  const whatsapp = `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`;
-  const twitter = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-  const facebook = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-  const copyLink = () => { navigator.clipboard.writeText(url); alert('लिंक कॉपी हो गया! ✅'); };
   return (
     <div className="flex flex-wrap items-center gap-3 py-4 border-t border-b border-gray-200 dark:border-gray-700 my-6">
       <span className="text-sm font-bold text-gray-600 dark:text-gray-400">शेयर करें:</span>
-      <a href={whatsapp} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors">
-        📱 WhatsApp
-      </a>
-      <a href={twitter} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors">
-        🐦 Twitter
-      </a>
-      <a href={facebook} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors">
-        📘 Facebook
-      </a>
-      <button onClick={copyLink}
-        className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-bold px-4 py-2 rounded-full transition-colors">
-        🔗 लिंक कॉपी करें
-      </button>
+      <a href={`https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors">📱 WhatsApp</a>
+      <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors">🐦 Twitter</a>
+      <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors">📘 Facebook</a>
+      <button onClick={() => { navigator.clipboard.writeText(url); alert('लिंक कॉपी हो गया! ✅'); }}
+        className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-sm font-bold px-4 py-2 rounded-full transition-colors">🔗 लिंक कॉपी करें</button>
     </div>
   );
 }
@@ -162,29 +136,116 @@ function RelatedArticles({ articleId, category }: { articleId: string; category:
         <h3 className="text-xl font-black text-gray-900 dark:text-white">संबंधित खबरें</h3>
       </div>
       <div className="grid sm:grid-cols-3 gap-4">
-        {related.map(a => {
-          const img = getImage(a);
-          return (
-            <Link key={a.id} href={`/news/${a.id}`}
-              className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
-              <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                <img src={img} alt={a.title_hi}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                {a.is_breaking && (
-                  <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">🔴 ब्रेकिंग</div>
-                )}
-              </div>
-              <div className="p-3">
-                <span className="text-xs font-bold text-orange-500 uppercase">{a.category}</span>
-                <h4 className="font-bold text-gray-900 dark:text-white text-sm mt-1 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-snug">
-                  {a.title_hi}
-                </h4>
-                <p className="text-xs text-gray-400 mt-2">{timeAgo(a.created_at)}</p>
-              </div>
-            </Link>
-          );
-        })}
+        {related.map(a => (
+          <Link key={a.id} href={`/news/${a.id}`}
+            className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+            <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
+              <img src={getImage(a)} alt={a.title_hi}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+            </div>
+            <div className="p-3">
+              <span className="text-xs font-bold text-orange-500 uppercase">{a.category}</span>
+              <h4 className="font-bold text-gray-900 dark:text-white text-sm mt-1 line-clamp-2 group-hover:text-orange-600 transition-colors leading-snug">{a.title_hi}</h4>
+              <p className="text-xs text-gray-400 mt-2">{timeAgo(a.created_at)}</p>
+            </div>
+          </Link>
+        ))}
       </div>
+    </div>
+  );
+}
+
+// ── Comments Section ──────────────────────────────────────────────────────────
+function CommentsSection({ articleId }: { articleId: string }) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [name, setName] = useState('');
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const fetchComments = () => {
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    fetch(`${SUPABASE_URL}/rest/v1/comments?article_id=eq.${articleId}&order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    }).then(r => r.json()).then(data => setComments(Array.isArray(data) ? data : [])).catch(console.error);
+  };
+
+  useEffect(() => { fetchComments(); }, [articleId]);
+
+  const handleSubmit = async () => {
+    if (!name.trim() || !comment.trim()) { alert('कृपया नाम और टिप्पणी दोनों भरें।'); return; }
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ article_id: Number(articleId), name: name.trim(), comment: comment.trim() }),
+      });
+      if (res.ok) {
+        setName(''); setComment(''); setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+        fetchComments();
+      }
+    } catch (e) { console.error(e); }
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="mt-12 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-1 h-7 bg-orange-500 rounded-full" />
+        <h3 className="text-xl font-black text-gray-900 dark:text-white">
+          टिप्पणियाँ {comments.length > 0 && <span className="text-orange-500">({comments.length})</span>}
+        </h3>
+      </div>
+
+      {/* Comment Form */}
+      <div className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 mb-6">
+        <h4 className="font-bold text-gray-900 dark:text-white mb-4">अपनी टिप्पणी लिखें</h4>
+        <div className="space-y-3">
+          <input type="text" value={name} onChange={e => setName(e.target.value)}
+            placeholder="आपका नाम *"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400" />
+          <textarea value={comment} onChange={e => setComment(e.target.value)}
+            placeholder="अपनी टिप्पणी यहाँ लिखें... *" rows={4}
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400 resize-none" />
+          {success && (
+            <p className="text-green-600 dark:text-green-400 text-sm font-semibold">✅ आपकी टिप्पणी सफलतापूर्वक जोड़ी गई!</p>
+          )}
+          <button onClick={handleSubmit} disabled={submitting}
+            className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl transition-colors">
+            {submitting ? 'भेजा जा रहा है...' : '✉️ टिप्पणी भेजें'}
+          </button>
+        </div>
+      </div>
+
+      {/* Comments List */}
+      {comments.length === 0 ? (
+        <p className="text-center text-gray-400 py-8">अभी कोई टिप्पणी नहीं है। पहली टिप्पणी करें!</p>
+      ) : (
+        <div className="space-y-4">
+          {comments.map(c => (
+            <div key={c.id} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center font-black text-orange-600 dark:text-orange-400 text-sm">
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 dark:text-white text-sm">{c.name}</p>
+                  <p className="text-xs text-gray-400">{timeAgo(c.created_at)}</p>
+                </div>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{c.comment}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -199,11 +260,8 @@ export default function ArticleClient({ article }: { article: Article | null }) 
     if (saved) setFontSize(Number(saved));
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('fontSize', String(fontSize));
-  }, [fontSize]);
+  useEffect(() => { localStorage.setItem('fontSize', String(fontSize)); }, [fontSize]);
 
-  // Track view count (once per session per article)
   useEffect(() => {
     if (!article) return;
     const key = `viewed_${article.id}`;
@@ -235,7 +293,6 @@ export default function ArticleClient({ article }: { article: Article | null }) 
         .news-serif { font-family: 'Playfair Display', 'Noto Serif Devanagari', serif !important; }
       `}</style>
 
-      {/* Nav */}
       <header className="bg-white dark:bg-[#161b22] border-b-2 border-orange-500 shadow-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2">
@@ -254,19 +311,14 @@ export default function ArticleClient({ article }: { article: Article | null }) 
         </div>
       </header>
 
-      {/* Hero */}
       <div className="w-full" style={{ maxHeight: '520px', overflow: 'hidden' }}>
         <img src={img} alt={article.title_hi} className="w-full object-cover"
           style={{ maxHeight: '520px', objectPosition: 'center' }} />
       </div>
 
-      {/* Body */}
       <main className="container mx-auto px-4 py-8 max-w-3xl">
-
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-xs font-bold text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-full">
-            {article.category}
-          </span>
+          <span className="text-xs font-bold text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-full">{article.category}</span>
           {article.is_breaking && (
             <span className="text-xs font-bold text-white bg-red-600 px-3 py-1 rounded-full flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />ब्रेकिंग न्यूज़
@@ -274,13 +326,8 @@ export default function ArticleClient({ article }: { article: Article | null }) 
           )}
         </div>
 
-        <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight mb-3 news-serif">
-          {article.title_hi}
-        </h1>
-
-        {article.title_en && (
-          <p className="text-gray-500 dark:text-gray-400 text-lg italic mb-4">{article.title_en}</p>
-        )}
+        <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight mb-3 news-serif">{article.title_hi}</h1>
+        {article.title_en && <p className="text-gray-500 dark:text-gray-400 text-lg italic mb-4">{article.title_en}</p>}
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
           <span>📅 {formatDate(article.created_at)}</span>
@@ -296,9 +343,7 @@ export default function ArticleClient({ article }: { article: Article | null }) 
         <ShareBar article={article} />
 
         {article.content ? (
-          <div className="mt-6">
-            <ContentRenderer content={article.content} fontSize={fontSize} />
-          </div>
+          <div className="mt-6"><ContentRenderer content={article.content} fontSize={fontSize} /></div>
         ) : (
           <p className="text-gray-400 italic mt-6">इस लेख की सामग्री उपलब्ध नहीं है।</p>
         )}
@@ -320,11 +365,10 @@ export default function ArticleClient({ article }: { article: Article | null }) 
         )}
 
         <RelatedArticles articleId={article.id} category={article.category} />
+        <CommentsSection articleId={article.id} />
 
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2 text-orange-500 hover:text-orange-600 font-bold transition-colors">
-            ← सभी खबरें देखें
-          </Link>
+          <Link href="/" className="flex items-center gap-2 text-orange-500 hover:text-orange-600 font-bold transition-colors">← सभी खबरें देखें</Link>
           <span className="text-xs text-gray-400">© 2026 राष्ट्रीय प्रहरी भारत</span>
         </div>
       </main>
