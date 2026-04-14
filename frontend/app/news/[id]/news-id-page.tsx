@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import ArticleClient from './ArticleClient';
 
-const API = process.env.NEXT_PUBLIC_API_URL;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rashtriya-prahari.vercel.app';
+// ✅ Fix — works on both server and client
+const API = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rashtriya-prahari.vercel.app';
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80';
 
 interface Article {
@@ -20,24 +20,43 @@ interface Article {
 
 async function getArticle(id: string): Promise<Article | null> {
   try {
-    const res = await fetch(`${API}/api/v1/news/${id}`, { next: { revalidate: 60 } });
-    if (!res.ok) return null;
-    const { data } = await res.json();
-    return data;
-  } catch {
+    const res = await fetch(`${API}/api/v1/news/${id}`, { 
+      cache: 'no-store',
+    });
+    console.log('Status:', res.status, '| API:', API);
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Error response:', err);
+      return null;
+    }
+    const json = await res.json();
+    console.log('Data received:', JSON.stringify(json).slice(0, 100));
+    return json.data ?? null;
+  } catch (err) {
+    console.error('getArticle error:', err);
     return null;
   }
 }
+// ── Server Component ──────────────────────────────────────────────────────────
+export default async function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const article = await getArticle(id);
+  return <ArticleClient article={article} />;
+}
 
 // ── SEO Metadata (server-side, for WhatsApp/Twitter/Google previews) ──────────
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const article = await getArticle(params.id);
+
+// ── SEO Metadata ──────────────────────────────────────────────────────────────
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const article = await getArticle(id);
   if (!article) {
     return {
       title: 'लेख नहीं मिला | राष्ट्रीय प्रहरी भारत',
       description: 'यह लेख उपलब्ध नहीं है।',
     };
   }
+  
 
   const img = article.image_url && !article.image_url.toLowerCase().includes('.pdf')
     ? article.image_url : FALLBACK_IMG;
@@ -72,8 +91,5 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-// ── Server Component ──────────────────────────────────────────────────────────
-export default async function ArticlePage({ params }: { params: { id: string } }) {
-  const article = await getArticle(params.id);
-  return <ArticleClient article={article} />;
-}
+
+
