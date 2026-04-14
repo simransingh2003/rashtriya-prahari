@@ -34,39 +34,17 @@ export default function SharedHeader() {
       `}</style>
       <header className="bg-white dark:bg-[#161b22] border-b-2 border-orange-500 shadow-sm sticky top-0 z-40">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-3 gap-3">
+          <div className="flex items-center justify-between py-2 gap-3">
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0">
-              <img src="/logo.svg" alt="logo"
-                className="w-11 h-11 rounded-full shadow-lg object-cover border-2 border-orange-200 dark:border-orange-800"
-                onError={e => {
-                  const el = e.currentTarget as HTMLImageElement;
-                  el.style.display = 'none';
-                  const fb = el.nextElementSibling as HTMLElement;
-                  if (fb) fb.style.display = 'flex';
-                }} />
-              <div style={{ display: 'none' }}
-                className="w-11 h-11 bg-gradient-to-br from-orange-500 to-red-500 rounded-full items-center justify-center text-white font-black text-lg shadow-lg shrink-0">
-                रा
-              </div>
-              <div>
-                <span style={{
-                  fontFamily: "'Playfair Display','Noto Serif Devanagari',serif",
-                  fontWeight: 900,
-                  background: 'linear-gradient(to right,#f97316,#ef4444)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  whiteSpace: 'nowrap',
-                  fontSize: 'clamp(15px,3vw,20px)',
-                  display: 'block',
-                }}>
-                  राष्ट्रीय प्रहरी भारत
-                </span>
-                <p className="text-xs text-gray-400 hidden sm:block whitespace-nowrap">
-                  एक राष्ट्र पहली • India's Trusted News
-                </p>
+              <div className="h-12 w-auto flex items-center">
+                <img
+                  src="/logo.svg"
+                  alt="राष्ट्रीय प्रहरी भारत न्यूज़"
+                  className="h-12 w-auto object-contain"
+                  style={{ maxWidth: '180px' }}
+                />
               </div>
             </Link>
 
@@ -86,7 +64,6 @@ export default function SharedHeader() {
                 className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 flex items-center justify-center transition-colors">
                 {darkMode ? '☀️' : '🌙'}
               </button>
-              {/* Mobile menu */}
               <button onClick={() => setMenuOpen(!menuOpen)}
                 className="lg:hidden w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center transition-colors">
                 {menuOpen ? '✕' : '☰'}

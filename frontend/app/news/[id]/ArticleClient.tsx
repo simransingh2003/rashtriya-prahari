@@ -333,8 +333,12 @@ export default function ArticleClient({ article }: { article: Article | null }) 
       <header className="bg-white dark:bg-[#161b22] border-b-2 border-orange-500 shadow-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="logo" className="w-9 h-9 rounded-xl"
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+          <img
+          src="/logo.svg"
+          alt="राष्ट्रीय प्रहरी भारत न्यूज़"
+          className="h-10 w-auto object-contain"
+          style={{ maxWidth: '160px' }}
+          />
             <span className="font-black text-lg bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent news-serif">
               राष्ट्रीय प्रहरी भारत
             </span>
