@@ -28,6 +28,7 @@ interface Comment {
   name: string;
   comment: string;
   created_at: string;
+  delete_token?: string;
 }
 
 const getImage = (a: Article) =>
@@ -44,6 +45,8 @@ const timeAgo = (d: string) => {
   if (h < 24) return `${h} घंटे पहले`;
   return formatDate(d);
 };
+
+const generateToken = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
 
 function getYouTubeId(url: string): string | null {
   const patterns = [
@@ -66,7 +69,6 @@ function YouTubeEmbed({ videoId }: { videoId: string }) {
   );
 }
 
-// ── Text Size Adjuster ────────────────────────────────────────────────────────
 function TextSizeAdjuster({ size, setSize }: { size: number; setSize: (n: number) => void }) {
   return (
     <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1.5">
@@ -80,7 +82,6 @@ function TextSizeAdjuster({ size, setSize }: { size: number; setSize: (n: number
   );
 }
 
-// ── Content Renderer ──────────────────────────────────────────────────────────
 function ContentRenderer({ content, fontSize }: { content: string; fontSize: number }) {
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
   if (isHTML) {
@@ -102,7 +103,6 @@ function ContentRenderer({ content, fontSize }: { content: string; fontSize: num
   );
 }
 
-// ── Share Bar ─────────────────────────────────────────────────────────────────
 function ShareBar({ article }: { article: Article }) {
   const url = typeof window !== 'undefined' ? window.location.href : '';
   const text = `${article.title_hi} - राष्ट्रीय प्रहरी भारत`;
@@ -121,7 +121,6 @@ function ShareBar({ article }: { article: Article }) {
   );
 }
 
-// ── Related Articles ──────────────────────────────────────────────────────────
 function RelatedArticles({ articleId, category }: { articleId: string; category: string }) {
   const [related, setRelated] = useState<Article[]>([]);
   useEffect(() => {
@@ -155,13 +154,21 @@ function RelatedArticles({ articleId, category }: { articleId: string; category:
   );
 }
 
-// ── Comments Section ──────────────────────────────────────────────────────────
 function CommentsSection({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [name, setName] = useState('');
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [myTokens, setMyTokens] = useState<Record<number, string>>({});
+
+  // Load my tokens from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`comment_tokens_${articleId}`);
+      if (stored) setMyTokens(JSON.parse(stored));
+    } catch {}
+  }, [articleId]);
 
   const fetchComments = () => {
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
@@ -176,6 +183,7 @@ function CommentsSection({ articleId }: { articleId: string }) {
     if (!name.trim() || !comment.trim()) { alert('कृपया नाम और टिप्पणी दोनों भरें।'); return; }
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
     setSubmitting(true);
+    const token = generateToken();
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
         method: 'POST',
@@ -183,17 +191,38 @@ function CommentsSection({ articleId }: { articleId: string }) {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
+          Prefer: 'return=representation',
         },
-        body: JSON.stringify({ article_id: Number(articleId), name: name.trim(), comment: comment.trim() }),
+        body: JSON.stringify({ article_id: Number(articleId), name: name.trim(), comment: comment.trim(), delete_token: token }),
       });
       if (res.ok) {
+        const [newComment] = await res.json();
+        // Save token to localStorage
+        const updated = { ...myTokens, [newComment.id]: token };
+        setMyTokens(updated);
+        localStorage.setItem(`comment_tokens_${articleId}`, JSON.stringify(updated));
         setName(''); setComment(''); setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
         fetchComments();
       }
     } catch (e) { console.error(e); }
     setSubmitting(false);
+  };
+
+  const handleDelete = async (commentId: number) => {
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    const token = myTokens[commentId];
+    if (!token) return;
+    if (!confirm('क्या आप इस टिप्पणी को हटाना चाहते हैं?')) return;
+    await fetch(`${SUPABASE_URL}/rest/v1/comments?id=eq.${commentId}&delete_token=eq.${token}`, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    });
+    const updated = { ...myTokens };
+    delete updated[commentId];
+    setMyTokens(updated);
+    localStorage.setItem(`comment_tokens_${articleId}`, JSON.stringify(updated));
+    fetchComments();
   };
 
   return (
@@ -205,7 +234,7 @@ function CommentsSection({ articleId }: { articleId: string }) {
         </h3>
       </div>
 
-      {/* Comment Form */}
+      {/* Form */}
       <div className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 mb-6">
         <h4 className="font-bold text-gray-900 dark:text-white mb-4">अपनी टिप्पणी लिखें</h4>
         <div className="space-y-3">
@@ -213,11 +242,9 @@ function CommentsSection({ articleId }: { articleId: string }) {
             placeholder="आपका नाम *"
             className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400" />
           <textarea value={comment} onChange={e => setComment(e.target.value)}
-            placeholder="अपनी टिप्पणी यहाँ लिखें... *" rows={4}
+            placeholder="अपनी टिप्पणी यहाँ लिखें... *" rows={3}
             className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400 resize-none" />
-          {success && (
-            <p className="text-green-600 dark:text-green-400 text-sm font-semibold">✅ आपकी टिप्पणी सफलतापूर्वक जोड़ी गई!</p>
-          )}
+          {success && <p className="text-green-600 dark:text-green-400 text-sm font-semibold">✅ टिप्पणी सफलतापूर्वक जोड़ी गई!</p>}
           <button onClick={handleSubmit} disabled={submitting}
             className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl transition-colors">
             {submitting ? 'भेजा जा रहा है...' : '✉️ टिप्पणी भेजें'}
@@ -225,32 +252,42 @@ function CommentsSection({ articleId }: { articleId: string }) {
         </div>
       </div>
 
-      {/* Comments List */}
+      {/* List */}
       {comments.length === 0 ? (
         <p className="text-center text-gray-400 py-8">अभी कोई टिप्पणी नहीं है। पहली टिप्पणी करें!</p>
       ) : (
         <div className="space-y-4">
-          {comments.map(c => (
-            <div key={c.id} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center font-black text-orange-600 dark:text-orange-400 text-sm">
-                  {c.name.charAt(0).toUpperCase()}
+          {comments.map(c => {
+            const canDelete = !!myTokens[c.id];
+            return (
+              <div key={c.id} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center font-black text-orange-600 dark:text-orange-400 text-sm shrink-0">
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 dark:text-white text-sm">{c.name}</p>
+                      <p className="text-xs text-gray-400">{timeAgo(c.created_at)}</p>
+                    </div>
+                  </div>
+                  {canDelete && (
+                    <button onClick={() => handleDelete(c.id)}
+                      className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors shrink-0">
+                      🗑️ हटाएं
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <p className="font-bold text-gray-900 dark:text-white text-sm">{c.name}</p>
-                  <p className="text-xs text-gray-400">{timeAgo(c.created_at)}</p>
-                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mt-3">{c.comment}</p>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{c.comment}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
 export default function ArticleClient({ article }: { article: Article | null }) {
   const [fontSize, setFontSize] = useState(18);
 

@@ -375,7 +375,7 @@ export default function Home() {
               </nav>
 
               {/* Search + theme */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">                                      
                 <div className={`relative transition-all duration-300 ${searchFocused ? 'w-56' : 'w-36'} hidden sm:block`}>
                   <input type="text" value={searchQuery}
                     onChange={e => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE); }}
@@ -386,7 +386,7 @@ export default function Home() {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
                 </div>
                 <button onClick={toggleTheme}
-                  className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 flex items-center justify-center transition-colors">
+                  className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-8 00 hover:bg-orange-100 dark:hover:bg-orange-900/30 flex items-center justify-center transition-colors">
                   {darkMode ? '☀️' : '🌙'}
                 </button>
               </div>
