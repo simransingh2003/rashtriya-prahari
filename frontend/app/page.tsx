@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
+import UserAuth from '@/components/UserAuth';
 
 interface Article {
   id: string;
@@ -318,6 +319,7 @@ export default function Home() {
                 <Link href="/rashifal" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
                   🔮 राशिफल
                 </Link>
+                <UserAuth />
               </nav>
 
               <div className="flex items-center gap-2">
