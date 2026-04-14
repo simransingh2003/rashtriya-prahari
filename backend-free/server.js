@@ -80,6 +80,18 @@ app.post('/api/v1/news/:id/view', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get('/api/v1/comments/counts', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT article_id, COUNT(*) as count FROM comments GROUP BY article_id`
+    );
+    const counts = {};
+    result.rows.forEach(row => { counts[row.article_id] = Number(row.count); });
+    res.json({ data: counts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // GET related articles by category
 app.get('/api/v1/news/:id/related', async (req, res) => {
   try {
