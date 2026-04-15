@@ -57,9 +57,10 @@ export default async function FooterPage({ params }: { params: { slug: string } 
       <div className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-white mb-2">{page.title}</h1>
         {page.updated_at && (
-          <p className="text-gray-500 text-sm mb-8">
-            अंतिम अपडेट: {new Date(page.updated_at).toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" })}
-          </p>
+          <p className="text-gray-500 text-sm mb-8" suppressHydrationWarning>
+             अंतिम अपडेट: {new Date(page.updated_at).toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" })}
+             </p>
+
         )}
         <div
           className="prose prose-invert prose-orange max-w-none text-gray-300 leading-relaxed"
