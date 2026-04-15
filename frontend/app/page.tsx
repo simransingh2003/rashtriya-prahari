@@ -303,6 +303,9 @@ export default function Home() {
               className="h-12 w-auto object-contain"
               style={{ maxWidth: '180px' }}
               />
+               <h3 className="text-2xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
+                  राष्ट्रीय प्रहरी भारत
+                </h3>
               <PushNotificationButton /> 
               </Link>
               
