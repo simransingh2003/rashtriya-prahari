@@ -28,15 +28,19 @@ async function getPage(slug: string) {
   return data;
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const label = SLUG_LABELS[params.slug] || params.slug;
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params; // Await it here
+  const label = SLUG_LABELS[slug] || slug;
   return {
     title: `${label} | राष्ट्रीय प्रहरी भारत`,
   };
+
 }
 
-export default async function FooterPage({ params }: { params: { slug: string } }) {
-  const page = await getPage(params.slug);
+export default async function FooterPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params; // Await it here
+  const page = await getPage(slug);
+  
   if (!page) notFound();
 
   return (
