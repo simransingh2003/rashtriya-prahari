@@ -1,6 +1,3 @@
-// components/Footer.tsx
-// Full footer with logo, site name, 5 footer pages, and push notification button
-
 import Link from "next/link";
 import PushNotificationButton from "./PushNotificationButton";
 
@@ -26,14 +23,14 @@ export default function Footer() {
               <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
                 रा
               </div>
-              <div>
-                <div className="font-bold text-white text-lg leading-none">राष्ट्रीय प्रहरी</div>
-                <div className="text-xs text-orange-400 mt-0.5">भारत</div>
-              </div>
+              <h3 className="text-2xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
+                  राष्ट्रीय प्रहरी भारत
+                </h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-sm">
+                  भारत का सबसे विश्वसनीय डिजिटल समाचार मंच। सत्य, निष्पक्ष और तेज़ खबरें — हर पल, हर जगह।
+                </p>
             </div>
-            <p className="text-gray-400 text-sm leading-relaxed mb-4">
-              भारत की विश्वसनीय हिंदी समाचार वेबसाइट। ताज़ा खबरें, विश्लेषण और विशेष रिपोर्ट।
-            </p>
+
             <PushNotificationButton />
           </div>
 

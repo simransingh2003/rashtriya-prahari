@@ -486,48 +486,7 @@ export default function Home() {
           )}
         </main>
 
-        <footer className="bg-gray-900 dark:bg-black text-white mt-16 border-t-4 border-orange-500">
-          <div className="container mx-auto px-4 py-12">
-            <div className="grid md:grid-cols-4 gap-8 mb-8">
-              <div className="md:col-span-2">
-                <h3 className="text-2xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
-                  राष्ट्रीय प्रहरी भारत
-                </h3>
-                <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-sm">
-                  भारत का सबसे विश्वसनीय डिजिटल समाचार मंच। सत्य, निष्पक्ष और तेज़ खबरें — हर पल, हर जगह।
-                </p>
-                <div className="flex gap-3">
-                  {['📘', '📷', '🐦', '▶️'].map((icon, i) => (
-                    <a key={i} href="#"
-                      className="w-10 h-10 bg-gray-800 hover:bg-orange-500 rounded-xl flex items-center justify-center transition-colors text-lg">
-                      {icon}
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold mb-4 text-gray-200">त्वरित लिंक</h4>
-                <div className="space-y-2">
-                  {['हमारे बारे में', 'संपर्क करें', 'गोपनीयता नीति', 'विज्ञापन', 'करियर'].map(l => (
-                    <a key={l} href="#" className="block text-gray-400 hover:text-orange-400 transition-colors text-sm">{l}</a>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold mb-4 text-gray-200">श्रेणियाँ</h4>
-                <div className="space-y-2">
-                  {CATEGORIES.filter(c => c !== 'सभी').slice(0, 5).map(c => (
-                    <button key={c} onClick={() => changeCategory(c)}
-                      className="block text-gray-400 hover:text-orange-400 transition-colors text-sm text-left">{c}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="text-center pt-8 border-t border-gray-800">
-              <p className="text-sm text-gray-500">© 2026 Rashtriya Prahari Bharat. All rights reserved. | Made with ❤️ in India</p>
-            </div>
-          </div>
-        </footer>
+       
 
         {selectedArticle && (
           <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />

@@ -48,8 +48,12 @@ export default function SharedHeader() {
               </div>
             </Link>
 
+
             {/* Desktop nav */}
             <nav className="hidden lg:flex items-center gap-1">
+              <h3 className="text-2xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
+                  राष्ट्रीय प्रहरी भारत
+                </h3>
               {NAV_LINKS.map(l => (
                 <Link key={l.href} href={l.href}
                   className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
