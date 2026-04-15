@@ -33,78 +33,68 @@ export default function SharedHeader() {
   ];
 
   return (
-    <header className="bg-white dark:bg-[#161b22] border-b-2 border-orange-500 shadow-sm sticky top-0 z-50 w-full">
+    <header className="bg-white dark:bg-[#1a1a1a] border-b-2 border-orange-500 sticky top-0 z-50 w-full shadow-md">
       <div className="container mx-auto px-4">
         
-        {/* --- MAIN HEADER ROW --- */}
-        <div className="flex items-center justify-between h-16 md:h-20 gap-4">
-          
-          {/* 1. Branding (Always visible) */}
+        {/* --- TOP ROW: Branding & Primary Tools --- */}
+        <div className="flex items-center justify-between h-16">
+          {/* Logo & Name */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <img src="/logo.svg" alt="Logo" className="h-10 md:h-14 w-auto" />
-            <h1 className="text-lg md:text-2xl font-black bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent leading-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
-              राष्ट्रीय प्रहरी <span className="block md:inline text-xs md:text-2xl">भारत</span>
-            </h1>
+            <img src="/logo.svg" alt="Logo" className="h-10 md:h-12 w-auto" />
+            <span className="text-lg font-black text-orange-600 dark:text-orange-500 whitespace-nowrap">
+              राष्ट्रीय प्रहरी भारत
+            </span>
           </Link>
 
-          {/* 2. Desktop Navigation (Hidden on Mobile) */}
-          {/* This row only shows on Large screens to prevent "crowding" */}
-          <nav className="hidden xl:flex items-center gap-6">
-            {NAV_LINKS.map(l => (
-              <Link key={l.href} href={l.href} className="text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-orange-600 transition-colors whitespace-nowrap">
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* 3. Action Area (Search, Theme, Menu) */}
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* Desktop Search (Hidden on Mobile) */}
-            <div className="hidden lg:block relative">
-              <input type="text" placeholder="खोजें..." className="bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-1.5 text-sm w-32 focus:w-48 transition-all dark:text-white" />
-            </div>
-
-            <div className="hidden sm:block">
-              <PushNotificationButton />
-            </div>
-
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800">
+          {/* Controls */}
+          <div className="flex items-center gap-2">
+            <button onClick={toggleTheme} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm">
               {darkMode ? '☀️' : '🌙'}
             </button>
-
-            {/* HAMBURGER BUTTON (Visible only on screens smaller than XL) */}
+            {/* Hamburger Button - Guaranteed to show on Mobile */}
             <button 
               onClick={() => setMenuOpen(!menuOpen)} 
-              className="xl:hidden p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white"
+              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white"
             >
               {menuOpen ? '✕' : '☰'}
             </button>
           </div>
         </div>
 
-        {/* --- MOBILE/TABLET DROPDOWN MENU --- */}
-        {menuOpen && (
-          <div className="xl:hidden absolute top-full left-0 w-full bg-white dark:bg-[#161b22] border-b border-gray-200 dark:border-gray-800 shadow-xl py-4 flex flex-col z-50">
-            {/* Mobile Search */}
-            <div className="px-6 mb-4">
-              <input type="text" placeholder="खबरें खोजें..." className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3 text-sm dark:text-white" />
-            </div>
-            
-            {/* Navigation Links */}
-            <div className="flex flex-col">
-              {NAV_LINKS.map(l => (
-                <Link 
-                  key={l.href} 
-                  href={l.href} 
-                  onClick={() => setMenuOpen(false)} 
-                  className="px-6 py-4 text-base font-bold text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-800 hover:bg-orange-50 dark:hover:bg-orange-900/10"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
+        {/* --- SECOND ROW (Mobile): Search Bar --- */}
+        <div className="pb-3 md:hidden">
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="खबरें खोजें..." 
+              className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-full px-5 py-2 text-sm dark:text-white focus:ring-2 focus:ring-orange-500" 
+            />
+            <span className="absolute right-4 top-2 text-gray-400 text-sm">🔍</span>
+          </div>
+        </div>
 
-            {/* Mobile Push Button */}
+        {/* --- DESKTOP ONLY: Navigation Bar --- */}
+        <nav className="hidden lg:flex items-center justify-center gap-8 py-3 border-t border-gray-50 dark:border-gray-800">
+          {NAV_LINKS.map(l => (
+            <Link key={l.href} href={l.href} className="text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-orange-600">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* --- MOBILE DROPDOWN MENU --- */}
+        {menuOpen && (
+          <div className="absolute top-full left-0 w-full bg-white dark:bg-[#1a1a1a] shadow-2xl border-t border-gray-100 dark:border-gray-800 py-4 flex flex-col z-50">
+            {NAV_LINKS.map(l => (
+              <Link 
+                key={l.href} 
+                href={l.href} 
+                onClick={() => setMenuOpen(false)} 
+                className="px-6 py-4 text-base font-bold text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-800 hover:bg-orange-50 dark:hover:bg-orange-900/10"
+              >
+                {l.label}
+              </Link>
+            ))}
             <div className="px-6 pt-4 flex justify-center">
               <PushNotificationButton />
             </div>
