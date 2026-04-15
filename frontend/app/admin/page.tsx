@@ -706,16 +706,7 @@ export default function AdminPage() {
                 </form>
               </div>
 
-              {/* Setup guide */}
-              <div className="bg-blue-900/10 border border-blue-800/30 rounded-2xl p-6 text-sm">
-                <h3 className="font-bold text-blue-300 mb-3">📖 सेटअप गाइड</h3>
-                <ol className="space-y-2 text-blue-400/80 list-decimal list-inside">
-                  <li><code className="bg-blue-900/30 px-1 rounded">push-routes.js</code> से कोड अपने <code className="bg-blue-900/30 px-1 rounded">server.js</code> में जोड़ें</li>
-                  <li><code className="bg-blue-900/30 px-1 rounded">sw.js</code> को अपने <code className="bg-blue-900/30 px-1 rounded">/public</code> फोल्डर में रखें</li>
-                  <li><code className="bg-blue-900/30 px-1 rounded">PushNotificationButton</code> को navbar में जोड़ें</li>
-                  <li>Render में <code className="bg-blue-900/30 px-1 rounded">VAPID_PUBLIC_KEY</code>, <code className="bg-blue-900/30 px-1 rounded">VAPID_PRIVATE_KEY</code>, <code className="bg-blue-900/30 px-1 rounded">VAPID_EMAIL</code> env vars सेट करें</li>
-                </ol>
-              </div>
+              
             </div>
           )}
 
