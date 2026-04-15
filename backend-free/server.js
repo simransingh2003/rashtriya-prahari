@@ -189,6 +189,100 @@ app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// ── Push Notification Routes ──────────────────────────────────────────────
+
+
+const webpush = require('web-push');
+
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL,
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+
+// POST /api/v1/push/subscribe — save a user's push subscription
+app.post('/api/v1/push/subscribe', async (req, res) => {
+  try {
+    const { endpoint, keys } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return res.status(400).json({ error: 'Invalid subscription object' });
+    }
+    // Upsert into Supabase push_subscriptions table
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert({ endpoint, p256dh: keys.p256dh, auth: keys.auth }, { onConflict: 'endpoint' });
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Subscribe error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/push/unsubscribe — remove a subscription
+app.post('/api/v1/push/unsubscribe', async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/push/send — send push to all subscribers (call this when publishing breaking news)
+app.post('/api/v1/push/send', async (req, res) => {
+  try {
+    const { title, body, url } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+
+    const { data: subs, error } = await supabase.from('push_subscriptions').select('*');
+    if (error) throw error;
+
+    const payload = JSON.stringify({
+      title: title || 'राष्ट्रीय प्रहरी भारत',
+      body: body || 'नई ब्रेकिंग न्यूज़',
+      url: url || '/',
+      icon: '/icon-192.png',
+      badge: '/badge-72.png',
+    });
+
+    const results = await Promise.allSettled(
+      subs.map(sub =>
+        webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payload
+        ).catch(async err => {
+          // Remove invalid/expired subscriptions
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+          }
+          throw err;
+        })
+      )
+    );
+
+    const sent = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    res.json({ success: true, sent, failed, total: subs.length });
+  } catch (err) {
+    console.error('Push send error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/v1/push/count — how many subscribers
+app.get('/api/v1/push/count', async (req, res) => {
+  try {
+    const { count } = await supabase
+      .from('push_subscriptions')
+      .select('*', { count: 'exact', head: true });
+    res.json({ count: count || 0 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Rashtriya Prahari Backend running on port ${PORT}`);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import UserAuth from '@/components/UserAuth';
+import PushNotificationButton from '@/components/PushNotificationButton';
 
 interface Article {
   id: string;
@@ -302,7 +303,10 @@ export default function Home() {
               className="h-12 w-auto object-contain"
               style={{ maxWidth: '180px' }}
               />
+              <PushNotificationButton /> 
               </Link>
+              
+              
 
               <nav className="hidden lg:flex items-center gap-1">
                 {['मुख्य पृष्ठ', 'राजनीति', 'खेल', 'मनोरंजन', 'तकनीक', 'व्यापार'].map(n => (
