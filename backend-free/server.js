@@ -191,10 +191,7 @@ app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// ── Push Notification Routes ──────────────────────────────────────────────
-
-
-const webpush = require('web-push');
+// ── Push Notification Routes ─────────────────────────────────────────────
 
 webpush.setVapidDetails(
   process.env.VAPID_EMAIL,
