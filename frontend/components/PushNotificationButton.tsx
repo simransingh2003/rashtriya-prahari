@@ -23,7 +23,6 @@ export default function PushNotificationButton() {
       return;
     }
     setStatus(Notification.permission as any);
-    // Check if already subscribed
     navigator.serviceWorker.ready.then(reg =>
       reg.pushManager.getSubscription().then(sub => setSubscribed(!!sub))
     );
@@ -33,22 +32,17 @@ export default function PushNotificationButton() {
     if (!("serviceWorker" in navigator)) return;
     setLoading(true);
     try {
-      // Register service worker
       const reg = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
-
-      // Request permission
       const permission = await Notification.requestPermission();
       setStatus(permission as any);
       if (permission !== "granted") { setLoading(false); return; }
 
-      // Subscribe to push
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
-      // Send to backend
       const subJson = sub.toJSON();
       await fetch(`${API}/api/v1/push/subscribe`, {
         method: "POST",
@@ -88,27 +82,23 @@ export default function PushNotificationButton() {
 
   if (status === "unsupported") return null;
   if (status === "denied") return (
-    <span className="text-xs text-gray-500 px-3 py-1.5 rounded-full border border-gray-700">
+    <span className="text-[10px] md:text-xs text-gray-500 px-3 py-1.5 rounded-full border border-gray-700" suppressHydrationWarning>
       🔕 सूचना बंद है
     </span>
   );
 
-  return subscribed ? (
+  return (
     <button
-      onClick={unsubscribe}
+      onClick={subscribed ? unsubscribe : subscribe}
       disabled={loading}
-      title="सूचना बंद करें"
-      className="flex items-center gap-1.5 text-xs bg-green-900/30 hover:bg-red-900/30 border border-green-700/40 hover:border-red-700/40 text-green-400 hover:text-red-400 px-3 py-1.5 rounded-full transition-all"
+      className={`flex items-center gap-1.5 text-[10px] md:text-xs px-3 py-1.5 rounded-full transition-all whitespace-nowrap ${
+        subscribed 
+          ? "bg-green-900/30 border border-green-700/40 text-green-400" 
+          : "bg-orange-500/10 border border-orange-500/30 text-orange-400"
+      }`}
+      suppressHydrationWarning
     >
-      {loading ? "..." : "🔔 सूचना चालू है"}
-    </button>
-  ) : (
-    <button
-      onClick={subscribe}
-      disabled={loading}
-      className="flex items-center gap-1.5 text-xs bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:text-orange-300 px-3 py-1.5 rounded-full transition-all"
-    >
-      {loading ? "..." : "🔔 ब्रेकिंग न्यूज़ अलर्ट"}
+      {loading ? "..." : (subscribed ? "🔔 सूचना चालू है" : "🔔 अलर्ट")}
     </button>
   );
 }
