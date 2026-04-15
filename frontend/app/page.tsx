@@ -303,14 +303,13 @@ export default function Home() {
               className="h-12 w-auto object-contain"
               style={{ maxWidth: '180px' }}
               />
-               <h3 className="text-2xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
+               <h3 className="text-1xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
                   राष्ट्रीय प्रहरी भारत
                 </h3>
-              <PushNotificationButton /> 
+
               </Link>
               
               
-
               <nav className="hidden lg:flex items-center gap-1">
                 {['मुख्य पृष्ठ', 'राजनीति', 'खेल', 'मनोरंजन', 'तकनीक', 'व्यापार'].map(n => (
                   <button key={n} onClick={() => changeCategory(n === 'मुख्य पृष्ठ' ? 'सभी' : n)}
@@ -326,6 +325,7 @@ export default function Home() {
                 <Link href="/rashifal" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
                   🔮 राशिफल
                 </Link>
+                 <PushNotificationButton /> 
                 <UserAuth />
               </nav>
 
