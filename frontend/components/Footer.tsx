@@ -26,9 +26,7 @@ export default function Footer() {
               <h3 className="text-2xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
                   राष्ट्रीय प्रहरी भारत
                 </h3>
-                <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-sm">
-                  भारत का सबसे विश्वसनीय डिजिटल समाचार मंच। सत्य, निष्पक्ष और तेज़ खबरें — हर पल, हर जगह।
-                </p>
+         
             </div>
 
             <PushNotificationButton />
