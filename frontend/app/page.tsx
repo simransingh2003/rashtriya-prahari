@@ -40,14 +40,14 @@ const timeAgo = (d: string) => {
 
 function BreakingTicker({ text }: { text: string }) {
   return (
-    <div className="bg-red-600 text-white py-2.5 overflow-hidden border-b border-red-700">
-      <div className="container mx-auto px-4 flex items-center gap-4">
-        <span className="font-bold whitespace-nowrap flex items-center gap-2 bg-white text-red-600 px-3 py-0.5 rounded text-sm shrink-0">
-          <span className="animate-pulse inline-block w-2 h-2 bg-red-600 rounded-full" />
+    <div className="bg-red-600 text-white py-2 overflow-hidden border-b border-red-700">
+      <div className="container mx-auto px-3 sm:px-4 flex items-center gap-3">
+        <span className="font-bold whitespace-nowrap flex items-center gap-1.5 bg-white text-red-600 px-2.5 py-0.5 rounded text-xs sm:text-sm shrink-0">
+          <span className="animate-pulse inline-block w-1.5 h-1.5 bg-red-600 rounded-full" />
           ब्रेकिंग
         </span>
         <div className="overflow-hidden flex-1">
-          <div className="animate-marquee whitespace-nowrap text-sm font-medium">{text}</div>
+          <div className="animate-marquee whitespace-nowrap text-xs sm:text-sm font-medium">{text}</div>
         </div>
       </div>
     </div>
@@ -57,27 +57,27 @@ function BreakingTicker({ text }: { text: string }) {
 function HeroCard({ article }: { article: Article }) {
   const img = getImage(article);
   return (
-    <div className="relative rounded-2xl overflow-hidden cursor-pointer group shadow-2xl" style={{ aspectRatio: '16/9' }}>
+    <div className="relative rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer group shadow-xl sm:shadow-2xl" style={{ aspectRatio: '16/9' }}>
       <img src={img} alt={article.title_hi}
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
       {article.pdf_url && (
-        <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">📄 PDF</div>
+        <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">📄 PDF</div>
       )}
-      <div className="absolute bottom-0 p-6 md:p-8">
+      <div className="absolute bottom-0 p-4 sm:p-6 md:p-8">
         {article.is_breaking && (
-          <span className="inline-flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
+          <span className="inline-flex items-center gap-1 bg-red-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-2 sm:mb-3">
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />ब्रेकिंग न्यूज़
           </span>
         )}
-        <span className="block text-orange-400 text-xs font-semibold uppercase tracking-widest mb-2">{article.category}</span>
-        <h2 className="text-white font-black text-2xl md:text-4xl leading-tight mb-3 group-hover:text-orange-300 transition-colors news-serif">
+        <span className="block text-orange-400 text-xs font-semibold uppercase tracking-widest mb-1.5 sm:mb-2">{article.category}</span>
+        <h2 className="text-white font-black text-xl sm:text-2xl md:text-4xl leading-tight mb-2 sm:mb-3 group-hover:text-orange-300 transition-colors news-serif line-clamp-3 sm:line-clamp-none">
           {article.title_hi}
         </h2>
         {article.content && (
-          <p className="text-gray-300 text-sm md:text-base line-clamp-2 mb-3 max-w-2xl">{article.content}</p>
+          <p className="text-gray-300 text-xs sm:text-sm md:text-base line-clamp-2 mb-2 sm:mb-3 max-w-2xl hidden sm:block">{article.content}</p>
         )}
-        <div className="flex items-center gap-3 text-gray-400 text-xs">
+        <div className="flex items-center gap-2 sm:gap-3 text-gray-400 text-xs">
           <span>{timeAgo(article.created_at)}</span>
           <span className="text-orange-500">•</span>
           <span className="text-orange-400 font-semibold">पढ़ें →</span>
@@ -90,34 +90,33 @@ function HeroCard({ article }: { article: Article }) {
 function GridCard({ article, commentCounts }: { article: Article; commentCounts: Record<string, number> }) {
   const img = getImage(article);
   return (
-    <div className="bg-white dark:bg-[#161b22] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group border border-gray-100 dark:border-gray-800">
+    <div className="bg-white dark:bg-[#161b22] rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group border border-gray-100 dark:border-gray-800">
       <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
         <img src={img} alt={article.title_hi}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
         {article.pdf_url && (
-          <div className="absolute bottom-2 right-2 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-bold px-2 py-0.5 rounded-full">📄 PDF</div>
+          <div className="absolute bottom-2 right-2 bg-blue-600/90 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">📄</div>
         )}
         {article.is_breaking && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> ब्रेकिंग
           </div>
         )}
       </div>
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <span className="text-xs font-bold text-orange-500 uppercase tracking-wider">{article.category}</span>
-        <h3 className="font-bold text-gray-900 dark:text-white mt-1.5 mb-2 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-snug news-serif"
-          style={{ fontSize: '1.05rem' }}>
+        <h3 className="font-bold text-gray-900 dark:text-white mt-1 mb-2 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-snug text-sm sm:text-base news-serif">
           {article.title_hi}
         </h3>
         {article.content && (
-          <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-3">{article.content}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3 hidden sm:block">{article.content}</p>
         )}
         <div className="flex items-center justify-between text-xs text-gray-400">
           <span>{timeAgo(article.created_at)}</span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {(article.view_count || 0) > 0 && <span>👁️ {article.view_count}</span>}
             {(commentCounts[article.id] || 0) > 0 && <span>💬 {commentCounts[article.id]}</span>}
-            <span className="text-orange-500 font-semibold group-hover:translate-x-1 transition-transform inline-block">पढ़ें →</span>
+            <span className="text-orange-500 font-semibold group-hover:translate-x-1 transition-transform inline-block">→</span>
           </div>
         </div>
       </div>
@@ -127,10 +126,10 @@ function GridCard({ article, commentCounts }: { article: Article; commentCounts:
 
 function CompactCard({ article, rank }: { article: Article; rank: number }) {
   return (
-    <div className="flex gap-3 items-start cursor-pointer group py-3 border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-orange-50/50 dark:hover:bg-gray-800/50 -mx-2 px-2 rounded-lg transition-colors">
-      <span className="text-2xl font-black text-orange-400 leading-none w-6 shrink-0">{rank}</span>
+    <div className="flex gap-3 items-start cursor-pointer group py-2.5 sm:py-3 border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-orange-50/50 dark:hover:bg-gray-800/50 -mx-2 px-2 rounded-lg transition-colors">
+      <span className="text-xl sm:text-2xl font-black text-orange-400 leading-none w-5 sm:w-6 shrink-0">{rank}</span>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-snug">
+        <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors leading-snug">
           {article.title_hi}
         </p>
         <div className="flex items-center gap-2 mt-1">
@@ -152,56 +151,56 @@ function ArticleModal({ article, onClose }: { article: Article; onClose: () => v
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto p-4"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-3xl my-8 shadow-2xl overflow-hidden animate-modal-in">
+      <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-3xl sm:my-8 shadow-2xl overflow-hidden animate-modal-in">
         <div className="relative" style={{ aspectRatio: '16/9' }}>
           <img src={img} alt={article.title_hi} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           <button onClick={onClose}
-            className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center text-xl transition-colors">×</button>
+            className="absolute top-3 right-3 w-9 h-9 sm:w-10 sm:h-10 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center text-lg sm:text-xl transition-colors">×</button>
           {article.is_breaking && (
-            <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+            <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> ब्रेकिंग न्यूज़
             </div>
           )}
-          <div className="absolute bottom-4 left-6">
+          <div className="absolute bottom-3 left-5">
             <span className="text-orange-400 text-xs font-bold uppercase tracking-widest">{article.category}</span>
           </div>
         </div>
-        <div className="p-6 md:p-8">
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight mb-2 news-serif">{article.title_hi}</h1>
-          {article.title_en && <p className="text-gray-500 dark:text-gray-400 text-base italic mb-4">{article.title_en}</p>}
-          <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 sm:p-6 md:p-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight mb-2 news-serif">{article.title_hi}</h1>
+          {article.title_en && <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base italic mb-3 sm:mb-4">{article.title_en}</p>}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-700">
             <span>📅 {formatDate(article.created_at)}</span>
             <span>•</span>
             <span>📁 {article.category}</span>
           </div>
           {article.content ? (
-            <div>
+            <div className="space-y-3">
               {article.content.split('\n').filter(p => p.trim()).map((para, i) => (
-                <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4 text-base">{para}</p>
+                <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">{para}</p>
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 italic">इस लेख की सामग्री उपलब्ध नहीं है।</p>
+            <p className="text-gray-400 italic text-sm">इस लेख की सामग्री उपलब्ध नहीं है।</p>
           )}
           {article.pdf_url && (
-            <div className="mt-8 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
-              <div className="flex items-center gap-4">
-                <div className="text-4xl">📄</div>
+            <div className="mt-6 sm:mt-8 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 sm:p-5">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="text-3xl sm:text-4xl">📄</div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900 dark:text-white">पूरी रिपोर्ट PDF में उपलब्ध है</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">विस्तृत जानकारी के लिए PDF खोलें</p>
+                  <p className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">पूरी रिपोर्ट PDF में उपलब्ध है</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">विस्तृत जानकारी के लिए PDF खोलें</p>
                 </div>
                 <a href={article.pdf_url} target="_blank" rel="noopener noreferrer"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm whitespace-nowrap">📄 PDF खोलें</a>
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-colors text-xs sm:text-sm whitespace-nowrap">📄 PDF खोलें</a>
               </div>
             </div>
           )}
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+          <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
             <button onClick={onClose}
-              className="bg-gray-100 dark:bg-gray-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 text-gray-700 dark:text-gray-300 hover:text-orange-600 font-semibold px-6 py-2.5 rounded-xl transition-colors">
+              className="bg-gray-100 dark:bg-gray-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 text-gray-700 dark:text-gray-300 hover:text-orange-600 font-semibold px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl transition-colors text-sm">
               बंद करें ×
             </button>
           </div>
@@ -292,71 +291,70 @@ export default function Home() {
 
       <div className="min-h-screen bg-gray-50 dark:bg-[#0e1117]">
 
-        {/* Header */}
+        {/* ── Header ── */}
         <header className="bg-white dark:bg-[#161b22] border-b-2 border-orange-500 shadow-sm sticky top-0 z-40">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between py-3 gap-3">
-              <Link href="/" className="flex items-center shrink-0">
-              <img
-              src="/logo.svg"
-              alt="राष्ट्रीय प्रहरी भारत न्यूज़"
-              className="h-12 w-auto object-contain"
-              style={{ maxWidth: '180px' }}
-              />
-               <h3 className="text-1xl font-black mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif">
+          <div className="container mx-auto px-3 sm:px-4">
+            <div className="flex items-center justify-between py-2.5 sm:py-3 gap-2 sm:gap-3">
+
+              <Link href="/" className="flex items-center shrink-0 min-w-0 gap-1.5">
+                <img src="/logo.svg" alt="राष्ट्रीय प्रहरी भारत न्यूज़"
+                  className="h-9 sm:h-11 w-auto object-contain shrink-0" style={{ maxWidth: '140px' }} />
+                <h3 className="hidden sm:block text-sm sm:text-base font-black bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent news-serif leading-tight whitespace-nowrap">
                   राष्ट्रीय प्रहरी भारत
                 </h3>
-
               </Link>
-              
-              
-              <nav className="hidden lg:flex items-center gap-1">
+
+              {/* Desktop nav */}
+              <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1">
                 {['मुख्य पृष्ठ', 'राजनीति', 'खेल', 'मनोरंजन', 'तकनीक', 'व्यापार'].map(n => (
                   <button key={n} onClick={() => changeCategory(n === 'मुख्य पृष्ठ' ? 'सभी' : n)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    className={`px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap ${
                       (n === 'मुख्य पृष्ठ' && activeCategory === 'सभी') || activeCategory === n
                         ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400'
                         : 'text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
                     }`}>{n}</button>
                 ))}
-                <Link href="/epaper" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
+                <Link href="/epaper" className="px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
                   📰 ई-पेपर
                 </Link>
-                <Link href="/rashifal" className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
+                <Link href="/rashifal" className="px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
                   🔮 राशिफल
                 </Link>
-                 <PushNotificationButton /> 
+                <PushNotificationButton />
                 <UserAuth />
               </nav>
 
-              <div className="flex items-center gap-2">
-                <div className={`relative transition-all duration-300 ${searchFocused ? 'w-56' : 'w-36'} hidden sm:block`}>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Search — tablet+ */}
+                <div className={`relative transition-all duration-300 ${searchFocused ? 'w-48 sm:w-56' : 'w-28 sm:w-36'} hidden sm:block`}>
                   <input type="text" value={searchQuery}
                     onChange={e => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE); }}
                     onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)}
                     placeholder="खबर खोजें..."
-                    className="w-full bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-orange-400 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:bg-white dark:focus:bg-gray-700 transition-all placeholder-gray-400 dark:text-white" />
+                    className="w-full bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-orange-400 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm focus:outline-none focus:bg-white dark:focus:bg-gray-700 transition-all placeholder-gray-400 dark:text-white" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
                 </div>
                 <button onClick={toggleTheme}
-                  className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 flex items-center justify-center transition-colors">
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 flex items-center justify-center transition-colors text-sm">
                   {darkMode ? '☀️' : '🌙'}
                 </button>
               </div>
             </div>
 
-            <div className="sm:hidden pb-3">
+            {/* Mobile search */}
+            <div className="sm:hidden pb-2.5">
               <input type="text" value={searchQuery}
                 onChange={e => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE); }}
                 placeholder="खबर खोजें..."
                 className="w-full bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 placeholder-gray-400 dark:text-white" />
             </div>
 
+            {/* Category pills — scrollable */}
             <div className="border-t border-gray-100 dark:border-gray-800">
               <div className="flex gap-1.5 overflow-x-auto hide-scroll py-2">
                 {CATEGORIES.map(cat => (
                   <button key={cat} onClick={() => changeCategory(cat)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
+                    className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                       activeCategory === cat
                         ? 'bg-orange-500 text-white shadow-md'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-gray-700 hover:text-orange-600'
@@ -369,19 +367,19 @@ export default function Home() {
 
         {breakingNews && <BreakingTicker text={breakingNews} />}
 
-        <main className="container mx-auto px-4 py-6">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           {loading && (
-            <div className="flex flex-col items-center justify-center py-32 gap-4">
-              <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
-              <p className="text-gray-400 font-medium">खबरें लोड हो रही हैं...</p>
+            <div className="flex flex-col items-center justify-center py-24 sm:py-32 gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+              <p className="text-gray-400 font-medium text-sm">खबरें लोड हो रही हैं...</p>
             </div>
           )}
 
           {!loading && filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-32 gap-3">
-              <div className="text-6xl">🔍</div>
-              <h3 className="text-xl font-bold text-gray-600 dark:text-gray-400">कोई खबर नहीं मिली</h3>
-              <p className="text-sm text-gray-400">
+            <div className="flex flex-col items-center justify-center py-24 sm:py-32 gap-3">
+              <div className="text-5xl sm:text-6xl">🔍</div>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-600 dark:text-gray-400">कोई खबर नहीं मिली</h3>
+              <p className="text-xs sm:text-sm text-gray-400 text-center px-4">
                 {searchQuery ? `"${searchQuery}" के लिए कोई परिणाम नहीं` : 'इस श्रेणी में कोई लेख नहीं'}
               </p>
               <button onClick={() => { setSearchQuery(''); changeCategory('सभी'); }}
@@ -390,8 +388,8 @@ export default function Home() {
           )}
 
           {!loading && visible.length > 0 && (
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-              <div className="xl:col-span-3 space-y-8">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 sm:gap-8">
+              <div className="xl:col-span-3 space-y-5 sm:space-y-8">
 
                 {hero && (
                   <div className="fade-up">
@@ -401,15 +399,16 @@ export default function Home() {
 
                 {grid.length > 0 && (
                   <div className="flex items-center gap-3">
-                    <div className="w-1 h-7 bg-orange-500 rounded-full" />
-                    <h2 className="text-xl font-black text-gray-900 dark:text-white news-serif">
+                    <div className="w-1 h-6 sm:h-7 bg-orange-500 rounded-full" />
+                    <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white news-serif">
                       {activeCategory === 'सभी' ? 'ताज़ा खबरें' : activeCategory}
                     </h2>
-                    <span className="text-sm text-gray-400">({filtered.length})</span>
+                    <span className="text-xs sm:text-sm text-gray-400">({filtered.length})</span>
                   </div>
                 )}
 
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {/* Grid: 1 col mobile, 2 tablet, 3 desktop */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                   {grid.map((article, i) => (
                     <div key={article.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
                       <Link href={`/news/${article.id}`} className="block">
@@ -422,7 +421,7 @@ export default function Home() {
                 {hasMore && (
                   <div className="flex justify-center pt-2">
                     <button onClick={() => setVisibleCount(v => v + PAGE_SIZE)}
-                      className="group flex items-center gap-2 bg-white dark:bg-gray-800 border-2 border-orange-400 text-orange-500 hover:bg-orange-500 hover:text-white font-bold px-8 py-3 rounded-full transition-all duration-300 shadow-sm">
+                      className="group flex items-center gap-2 bg-white dark:bg-gray-800 border-2 border-orange-400 text-orange-500 hover:bg-orange-500 hover:text-white font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-full transition-all duration-300 shadow-sm text-sm">
                       और खबरें देखें
                       <span className="group-hover:translate-y-0.5 transition-transform inline-block">↓</span>
                     </button>
@@ -430,11 +429,12 @@ export default function Home() {
                 )}
 
                 {!hasMore && filtered.length > PAGE_SIZE && (
-                  <p className="text-center text-gray-400 text-sm py-2">सभी {filtered.length} खबरें दिखाई जा चुकी हैं ✓</p>
+                  <p className="text-center text-gray-400 text-xs sm:text-sm py-2">सभी {filtered.length} खबरें दिखाई जा चुकी हैं ✓</p>
                 )}
               </div>
 
-              <div className="space-y-6">
+              {/* Sidebar — hidden on mobile, shown on xl */}
+              <div className="hidden xl:block space-y-6">
                 <div className="bg-white dark:bg-[#161b22] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
                     <span>🔥</span>
@@ -474,22 +474,37 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 text-white shadow-xl shadow-orange-200 dark:shadow-orange-900/20">
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 text-white shadow-xl">
                   <div className="text-4xl mb-3">📱</div>
-                  <h3 className="font-black text-xl mb-2 news-serif">ऐप डाउनलोड करें</h3>
+                  <h3 className="font-black text-lg mb-2 news-serif">ऐप डाउनलोड करें</h3>
                   <p className="text-sm text-orange-100 mb-4 leading-relaxed">
                     तेज़ खबरें, ऑफलाइन पढ़ना और नोटिफिकेशन के लिए हमारा ऐप डाउनलोड करें!
                   </p>
-                  <button className="block w-full text-center bg-white text-orange-600 font-bold py-3 rounded-xl hover:bg-orange-50 transition-colors text-sm shadow-lg">
+                  <button className="block w-full text-center bg-white text-orange-600 font-bold py-2.5 rounded-xl hover:bg-orange-50 transition-colors text-sm shadow-lg">
                     ▶ Play Store पर जल्द आ रहा है
                   </button>
                 </div>
               </div>
             </div>
           )}
-        </main>
 
-       
+          {/* Mobile trending strip — only on small screens */}
+          {!loading && visible.length > 0 && (
+            <div className="xl:hidden mt-6 bg-white dark:bg-[#161b22] rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+                <span>🔥</span>
+                <h3 className="font-black text-gray-900 dark:text-white text-sm news-serif">ट्रेंडिंग</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
+                {trending.map((a, i) => (
+                  <Link key={a.id} href={`/news/${a.id}`} className="block">
+                    <CompactCard article={a} rank={i + 1} />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </main>
 
         {selectedArticle && (
           <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
