@@ -64,19 +64,19 @@ function HeroCard({ article }: { article: Article }) {
       {article.pdf_url && (
         <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">📄 PDF</div>
       )}
-      <div className="absolute bottom-0 p-4 sm:p-6 md:p-8">
-        {article.is_breaking && (
-          <span className="inline-flex items-center gap-1 bg-red-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-2 sm:mb-3">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />ब्रेकिंग न्यूज़
-          </span>
-        )}
-        <span className="block text-orange-400 text-xs font-semibold uppercase tracking-widest mb-1.5 sm:mb-2">{article.category}</span>
-        <h2 className="text-white font-black text-xl sm:text-2xl md:text-4xl leading-tight mb-2 sm:mb-3 group-hover:text-orange-300 transition-colors news-serif line-clamp-3 sm:line-clamp-none">
-          {article.title_hi}
-        </h2>
-        {article.content && (
-          <p className="text-gray-300 text-xs sm:text-sm md:text-base line-clamp-2 mb-2 sm:mb-3 max-w-2xl hidden sm:block">{article.content}</p>
-        )}
+      {article.content && (
+  <p 
+    className="text-gray-300 text-xs sm:text-sm md:text-base mb-2 sm:mb-3 max-w-2xl hidden sm:block"
+    style={{
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical',
+      overflow: 'hidden'
+    }}
+  >
+    {article.content}
+  </p>
+)}
         <div className="flex items-center gap-2 sm:gap-3 text-gray-400 text-xs">
           <span>{timeAgo(article.created_at)}</span>
           <span className="text-orange-500">•</span>
