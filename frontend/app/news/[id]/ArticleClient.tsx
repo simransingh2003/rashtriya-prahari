@@ -16,6 +16,7 @@ interface Article {
   category: string;
   image_url: string;
   pdf_url?: string;
+  video_url?: string;
   is_breaking: boolean;
   is_published: boolean;
   created_at: string;
@@ -69,6 +70,25 @@ function YouTubeEmbed({ videoId }: { videoId: string }) {
   );
 }
 
+// ── Native Video Player ───────────────────────────────────────────────────────
+function VideoPlayer({ url }: { url: string }) {
+  return (
+    <div className="my-6 rounded-xl overflow-hidden shadow-lg bg-black">
+      <video
+        controls
+        preload="metadata"
+        className="w-full max-h-[520px]"
+        style={{ display: 'block' }}
+      >
+        <source src={url} />
+        <source src={url} type="video/mp4" />
+        <source src={url} type="video/webm" />
+        आपका ब्राउज़र वीडियो को सपोर्ट नहीं करता।
+      </video>
+    </div>
+  );
+}
+
 function TextSizeAdjuster({ size, setSize }: { size: number; setSize: (n: number) => void }) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5">
@@ -87,12 +107,12 @@ function ContentRenderer({ content, fontSize }: { content: string; fontSize: num
   if (isHTML) {
     return (
       <div style={{ fontSize: `${fontSize}px` }}
-        className="prose prose-sm sm:prose-lg dark:prose-invert max-w-none prose-headings:font-black prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-a:text-orange-500 prose-img:rounded-xl"
+        className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-black prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-a:text-orange-500 prose-img:rounded-xl"
         dangerouslySetInnerHTML={{ __html: content }} />
     );
   }
   return (
-    <div className="space-y-3 sm:space-y-4" style={{ fontSize: `${fontSize}px` }}>
+    <div className="space-y-4" style={{ fontSize: `${fontSize}px` }}>
       {content.split('\n').filter(p => p.trim()).map((para, i) => {
         const trimmed = para.trim();
         const ytId = getYouTubeId(trimmed);
@@ -108,15 +128,15 @@ function ShareBar({ article }: { article: Article }) {
   const text = `${article.title_hi} - राष्ट्रीय प्रहरी भारत`;
   return (
     <div className="flex flex-wrap items-center gap-2 sm:gap-3 py-3 sm:py-4 border-t border-b border-gray-200 dark:border-gray-700 my-4 sm:my-6">
-      <span className="text-xs sm:text-sm font-bold text-gray-600 dark:text-gray-400 w-full sm:w-auto">शेयर करें:</span>
+      <span className="text-xs sm:text-sm font-bold text-gray-600 dark:text-gray-400">शेयर करें:</span>
       <a href={`https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">📱 WhatsApp</a>
+        className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">📱 WhatsApp</a>
       <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">🐦 Twitter</a>
+        className="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">🐦 Twitter</a>
       <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">📘 Facebook</a>
+        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">📘 Facebook</a>
       <button onClick={() => { navigator.clipboard.writeText(url); alert('लिंक कॉपी हो गया! ✅'); }}
-        className="flex items-center gap-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">🔗 लिंक</button>
+        className="flex items-center gap-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors">🔗 कॉपी</button>
     </div>
   );
 }
@@ -129,12 +149,11 @@ function RelatedArticles({ articleId, category }: { articleId: string; category:
   }, [articleId, category]);
   if (related.length === 0) return null;
   return (
-    <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t-2 border-gray-200 dark:border-gray-700">
+    <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t-2 border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <div className="w-1 h-6 sm:h-7 bg-orange-500 rounded-full" />
         <h3 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white">संबंधित खबरें</h3>
       </div>
-      {/* 1 col on mobile, 3 on sm+ */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {related.map(a => (
           <Link key={a.id} href={`/news/${a.id}`}
@@ -142,11 +161,18 @@ function RelatedArticles({ articleId, category }: { articleId: string; category:
             <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
               <img src={getImage(a)} alt={a.title_hi}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              {a.video_url && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black/60 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xl ml-1">▶</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="p-3">
               <span className="text-xs font-bold text-orange-500 uppercase">{a.category}</span>
               <h4 className="font-bold text-gray-900 dark:text-white text-sm mt-1 line-clamp-2 group-hover:text-orange-600 transition-colors leading-snug">{a.title_hi}</h4>
-              <p className="text-xs text-gray-400 mt-1.5">{timeAgo(a.created_at)}</p>
+              <p className="text-xs text-gray-400 mt-2">{timeAgo(a.created_at)}</p>
             </div>
           </Link>
         ))}
@@ -164,56 +190,52 @@ function CommentsSection({ articleId }: { articleId: string }) {
   const [myTokens, setMyTokens] = useState<Record<number, string>>({});
 
   useEffect(() => {
-    fetchComments();
     try {
-      const saved = localStorage.getItem(`comment_tokens_${articleId}`);
-      if (saved) setMyTokens(JSON.parse(saved));
-    } catch (e) {}
+      const stored = localStorage.getItem(`comment_tokens_${articleId}`);
+      if (stored) setMyTokens(JSON.parse(stored));
+    } catch {}
   }, [articleId]);
 
-  const fetchComments = async () => {
+  const fetchComments = () => {
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/comments?article_id=eq.${articleId}&order=created_at.asc`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-      );
-      const data = await res.json();
-      setComments(Array.isArray(data) ? data : []);
-    } catch (e) {}
+    fetch(`${SUPABASE_URL}/rest/v1/comments?article_id=eq.${articleId}&order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    }).then(r => r.json()).then(data => setComments(Array.isArray(data) ? data : [])).catch(console.error);
   };
 
+  useEffect(() => { fetchComments(); }, [articleId]);
+
   const handleSubmit = async () => {
-    if (!name.trim() || !comment.trim() || !SUPABASE_URL || !SUPABASE_KEY) return;
+    if (!name.trim() || !comment.trim()) { alert('कृपया नाम और टिप्पणी दोनों भरें।'); return; }
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
     setSubmitting(true);
+    const token = generateToken();
     try {
-      const token = generateToken();
       const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
         method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json', Prefer: 'return=representation',
-        },
-        body: JSON.stringify({ article_id: articleId, name: name.trim(), comment: comment.trim(), delete_token: token }),
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({ article_id: Number(articleId), name: name.trim(), comment: comment.trim(), delete_token: token }),
       });
-      const [saved] = await res.json();
-      if (saved?.id) {
-        const updated = { ...myTokens, [saved.id]: token };
+      if (res.ok) {
+        const [newComment] = await res.json();
+        const updated = { ...myTokens, [newComment.id]: token };
         setMyTokens(updated);
         localStorage.setItem(`comment_tokens_${articleId}`, JSON.stringify(updated));
+        setName(''); setComment(''); setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+        fetchComments();
       }
-      setName(''); setComment(''); setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-      fetchComments();
-    } catch (e) {}
+    } catch (e) { console.error(e); }
     setSubmitting(false);
   };
 
   const handleDelete = async (commentId: number) => {
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
-    await fetch(`${SUPABASE_URL}/rest/v1/comments?id=eq.${commentId}`, {
-      method: 'DELETE',
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    const token = myTokens[commentId];
+    if (!token) return;
+    if (!confirm('क्या आप इस टिप्पणी को हटाना चाहते हैं?')) return;
+    await fetch(`${SUPABASE_URL}/rest/v1/comments?id=eq.${commentId}&delete_token=eq.${token}`, {
+      method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     });
     const updated = { ...myTokens };
     delete updated[commentId];
@@ -223,60 +245,53 @@ function CommentsSection({ articleId }: { articleId: string }) {
   };
 
   return (
-    <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t-2 border-gray-200 dark:border-gray-700">
+    <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t-2 border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <div className="w-1 h-6 sm:h-7 bg-orange-500 rounded-full" />
         <h3 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white">
           टिप्पणियाँ {comments.length > 0 && <span className="text-orange-500">({comments.length})</span>}
         </h3>
       </div>
-
       <div className="bg-white dark:bg-[#161b22] rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 p-4 sm:p-6 mb-4 sm:mb-6">
         <h4 className="font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 text-sm sm:text-base">अपनी टिप्पणी लिखें</h4>
-        <div className="space-y-2.5 sm:space-y-3">
-          <input type="text" value={name} onChange={e => setName(e.target.value)}
-            placeholder="आपका नाम *"
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400" />
-          <textarea value={comment} onChange={e => setComment(e.target.value)}
-            placeholder="अपनी टिप्पणी यहाँ लिखें... *" rows={3}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400 resize-none" />
-          {success && <p className="text-green-600 dark:text-green-400 text-xs sm:text-sm font-semibold">✅ टिप्पणी सफलतापूर्वक जोड़ी गई!</p>}
+        <div className="space-y-3">
+          <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="आपका नाम *"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400 text-sm" />
+          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="अपनी टिप्पणी यहाँ लिखें... *" rows={3}
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-gray-900 dark:text-white focus:outline-none focus:border-orange-400 transition-colors placeholder-gray-400 resize-none text-sm" />
+          {success && <p className="text-green-600 dark:text-green-400 text-sm font-semibold">✅ टिप्पणी जोड़ी गई!</p>}
           <button onClick={handleSubmit} disabled={submitting}
-            className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-colors text-sm">
+            className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-colors text-sm">
             {submitting ? 'भेजा जा रहा है...' : '✉️ टिप्पणी भेजें'}
           </button>
         </div>
       </div>
-
       {comments.length === 0 ? (
         <p className="text-center text-gray-400 py-6 sm:py-8 text-sm">अभी कोई टिप्पणी नहीं है। पहली टिप्पणी करें!</p>
       ) : (
         <div className="space-y-3 sm:space-y-4">
-          {comments.map(c => {
-            const canDelete = !!myTokens[c.id];
-            return (
-              <div key={c.id} className="bg-white dark:bg-[#161b22] rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center font-black text-orange-600 dark:text-orange-400 text-xs sm:text-sm shrink-0">
-                      {c.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm">{c.name}</p>
-                      <p className="text-xs text-gray-400">{timeAgo(c.created_at)}</p>
-                    </div>
+          {comments.map(c => (
+            <div key={c.id} className="bg-white dark:bg-[#161b22] rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center font-black text-orange-600 dark:text-orange-400 text-xs sm:text-sm shrink-0">
+                    {c.name.charAt(0).toUpperCase()}
                   </div>
-                  {canDelete && (
-                    <button onClick={() => handleDelete(c.id)}
-                      className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors shrink-0">
-                      🗑️
-                    </button>
-                  )}
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm">{c.name}</p>
+                    <p className="text-xs text-gray-400">{timeAgo(c.created_at)}</p>
+                  </div>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mt-2.5 sm:mt-3">{c.comment}</p>
+                {myTokens[c.id] && (
+                  <button onClick={() => handleDelete(c.id)}
+                    className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors shrink-0">
+                    🗑️ हटाएं
+                  </button>
+                )}
               </div>
-            );
-          })}
+              <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mt-3">{c.comment}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -304,11 +319,11 @@ export default function ArticleClient({ article }: { article: Article | null }) 
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0e1117] flex flex-col items-center justify-center gap-4 px-4 text-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0e1117] flex flex-col items-center justify-center gap-4 px-4">
         <div className="text-5xl sm:text-6xl">📭</div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-300">लेख नहीं मिला</h1>
-        <p className="text-gray-500 text-sm">यह लेख उपलब्ध नहीं है या हटा दिया गया है।</p>
-        <Link href="/" className="mt-4 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-colors text-sm">
+        <p className="text-gray-500 text-sm text-center">यह लेख उपलब्ध नहीं है या हटा दिया गया है।</p>
+        <Link href="/" className="mt-4 bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm">
           ← मुख्य पृष्ठ पर जाएं
         </Link>
       </div>
@@ -316,6 +331,8 @@ export default function ArticleClient({ article }: { article: Article | null }) 
   }
 
   const img = getImage(article);
+  const isDirectVideo = article.video_url && !getYouTubeId(article.video_url);
+  const isYouTubeVideo = article.video_url && !!getYouTubeId(article.video_url);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0e1117]">
@@ -325,46 +342,68 @@ export default function ArticleClient({ article }: { article: Article | null }) 
         .news-serif { font-family: 'Playfair Display', 'Noto Serif Devanagari', serif !important; }
       `}</style>
 
-      {/* Article header */}
+      {/* Nav */}
       <header className="bg-white dark:bg-[#161b22] border-b-2 border-orange-500 shadow-sm sticky top-0 z-40">
         <div className="container mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3">
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <Link href="/" className="flex items-center gap-2">
             <img src="/logo.svg" alt="राष्ट्रीय प्रहरी भारत न्यूज़"
-              className="h-8 sm:h-10 w-auto object-contain shrink-0" style={{ maxWidth: '120px' }} />
-            <span className="font-black text-sm sm:text-base bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent news-serif hidden xs:block truncate">
+              className="h-9 sm:h-10 w-auto object-contain" style={{ maxWidth: '44px' }} />
+            <span className="font-black text-sm sm:text-base hidden sm:block"
+              style={{ background: 'linear-gradient(to right,#f97316,#ef4444)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               राष्ट्रीय प्रहरी भारत
             </span>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
             <TextSizeAdjuster size={fontSize} setSize={setFontSize} />
-            <Link href="/" className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-orange-500 transition-colors hidden sm:block whitespace-nowrap">
-              ← वापस
+            <Link href="/" className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-orange-500 transition-colors hidden sm:block">
+              ← वापस जाएं
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero image */}
-      <div className="w-full overflow-hidden" style={{ maxHeight: '420px' }}>
-        <img src={img} alt={article.title_hi} className="w-full object-cover"
-          style={{ maxHeight: '420px', objectPosition: 'center' }} />
-      </div>
+      {/* Hero — show video if available, else image */}
+      {isDirectVideo && article.video_url ? (
+        <div className="w-full bg-black">
+          <div className="container mx-auto max-w-4xl">
+            <VideoPlayer url={article.video_url} />
+          </div>
+        </div>
+      ) : (
+        <div className="w-full" style={{ maxHeight: '520px', overflow: 'hidden' }}>
+          <img src={img} alt={article.title_hi} className="w-full object-cover"
+            style={{ maxHeight: '520px', objectPosition: 'center' }} />
+        </div>
+      )}
 
       <main className="container mx-auto px-3 sm:px-4 py-5 sm:py-8 max-w-3xl">
+
         {/* Badges */}
-        <div className="flex flex-wrap items-center gap-2 mb-3 sm:mb-4">
-          <span className="text-xs font-bold text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-900/20 px-2.5 py-0.5 rounded-full">{article.category}</span>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+          <span className="text-xs font-bold text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-full">
+            {article.category}
+          </span>
           {article.is_breaking && (
-            <span className="text-xs font-bold text-white bg-red-600 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span className="text-xs font-bold text-white bg-red-600 px-3 py-1 rounded-full flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />ब्रेकिंग न्यूज़
+            </span>
+          )}
+          {article.video_url && (
+            <span className="text-xs font-bold text-white bg-purple-600 px-3 py-1 rounded-full flex items-center gap-1.5">
+              🎬 वीडियो
             </span>
           )}
         </div>
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight mb-2 sm:mb-3 news-serif">{article.title_hi}</h1>
-        {article.title_en && <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg italic mb-3 sm:mb-4">{article.title_en}</p>}
+        <h1 className="text-xl sm:text-2xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight mb-2 sm:mb-3 news-serif">
+          {article.title_hi}
+        </h1>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-700">
+        {article.title_en && (
+          <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg italic mb-3 sm:mb-4">{article.title_en}</p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-700">
           <span>📅 {formatDate(article.created_at)}</span>
           <span>📁 {article.category}</span>
           <span className="hidden sm:inline">🗞️ राष्ट्रीय प्रहरी भारत</span>
@@ -377,22 +416,33 @@ export default function ArticleClient({ article }: { article: Article | null }) 
 
         <ShareBar article={article} />
 
+        {/* YouTube video in content area */}
+        {isYouTubeVideo && article.video_url && (
+          <div className="mt-4 sm:mt-6 mb-4">
+            <YouTubeEmbed videoId={getYouTubeId(article.video_url)!} />
+          </div>
+        )}
+
+        {/* Content */}
         {article.content ? (
-          <div className="mt-4 sm:mt-6"><ContentRenderer content={article.content} fontSize={fontSize} /></div>
+          <div className="mt-4 sm:mt-6">
+            <ContentRenderer content={article.content} fontSize={fontSize} />
+          </div>
         ) : (
           <p className="text-gray-400 italic mt-4 sm:mt-6 text-sm">इस लेख की सामग्री उपलब्ध नहीं है।</p>
         )}
 
+        {/* PDF section */}
         {article.pdf_url && (
           <div className="mt-8 sm:mt-10 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl sm:rounded-2xl p-4 sm:p-6">
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="text-3xl sm:text-5xl shrink-0">📄</div>
+              <div className="text-4xl sm:text-5xl">📄</div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm sm:text-lg text-gray-900 dark:text-white">पूरी रिपोर्ट PDF में उपलब्ध है</p>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 hidden sm:block">विस्तृत जानकारी के लिए नीचे दिए गए बटन से PDF डाउनलोड करें</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">विस्तृत जानकारी के लिए PDF डाउनलोड करें</p>
               </div>
               <a href={article.pdf_url} target="_blank" rel="noopener noreferrer"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-colors text-xs sm:text-sm whitespace-nowrap shadow-lg shrink-0">
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-colors text-xs sm:text-sm whitespace-nowrap shadow-lg">
                 📄 PDF खोलें
               </a>
             </div>
@@ -402,8 +452,10 @@ export default function ArticleClient({ article }: { article: Article | null }) 
         <RelatedArticles articleId={article.id} category={article.category} />
         <CommentsSection articleId={article.id} />
 
-        <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 text-orange-500 hover:text-orange-600 font-bold transition-colors text-sm">← सभी खबरें</Link>
+        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2 text-orange-500 hover:text-orange-600 font-bold transition-colors text-sm">
+            ← सभी खबरें देखें
+          </Link>
           <span className="text-xs text-gray-400">© 2026 राष्ट्रीय प्रहरी भारत</span>
         </div>
       </main>
